@@ -2,7 +2,7 @@
 name=Location Lab QGIS Plugin
 qgisMinimumVersion=2.0
 description=Perform Location Intelligence analysis in QGIS environment
-version=1.0.4
+version=1.0.5
 author=Sebastian Schulz / GIS Support
 email=sebastian.schulz@gis-support.pl
 about=Location Lab QGIS Plugin is a set of analitical tools. Module Catchments: allows to generate catchments areas using third-party API's (HERE and Skobbler for now). Visit Plugin homepage for more info.

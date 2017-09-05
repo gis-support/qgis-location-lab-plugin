@@ -135,7 +135,7 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
 
     def loadKey(self):
         value = 'gissupport/location_lab/{}'.format(self.providersComboBox.currentText())
-        self.keyLineEdit.setText(QSettings().value(value))
+        self.keyLineEdit.setText(QSettings().value(value) or '')
 
     def getPoints(self, vl, features):
         trans = QgsCoordinateTransform(vl.crs(), QgsCoordinateReferenceSystem(4326))
