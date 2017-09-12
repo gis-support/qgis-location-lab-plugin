@@ -1,0 +1,7 @@
+1.0.7
+- fix: HERE supports only car, pedestrian and truck isolines
+- fix: empty catchment exception in Skobbler
+
+1.0.6
+- first public release
+- calculate catchments with HERE and Skobbler
