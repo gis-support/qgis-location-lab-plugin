@@ -144,6 +144,7 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
 
     def requestApi(self, points):
         polygons = []
+        not_found = 0
         if self.providersComboBox.currentText() == 'Skobbler':
             """
             Skobbler options:
@@ -183,7 +184,11 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
                     if e[1] == 401:
                         return 'invalid key'
                     continue
-                params['coordinates'] = json.loads(r.read())['realReach']['gpsPoints']
+                data = json.loads(r.read())
+                if data['status']['apiMessage'] == 'Route cannot be calculated.':
+                    not_found += 1
+                    continue
+                params['coordinates'] = data['realReach']['gpsPoints']
                 polygons.append(params)
         elif self.providersComboBox.currentText() == 'HERE':
             """
@@ -220,6 +225,11 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
                     continue
                 params['coordinates'] = json.loads(r.read())['response']['isoline'][0]['component'][0]['shape']
                 polygons.append(params)
+        if polygons and not_found:
+            self.iface.messageBar().pushMessage(
+                u'Catchments',
+                u'{} catchments not found'.format(not_found),
+                level=QgsMessageBar.INFO)
         return polygons
 
     def addPolygonsToMap(self, polygons):
