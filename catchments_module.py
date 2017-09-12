@@ -39,12 +39,8 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
 
 HERE_PARAMS = {
     'Car': 'car',
-    'HOV car': 'carHOV',
     'Pedestrian': 'pedestrian',
-    'Public transport': 'publicTransport',
-    'Public transport timetable': 'publicTransportTimeTable',
-    'Truck': 'truck',
-    'Bicycle': 'bicycle'
+    'Truck': 'truck'
 }
 
 class CatchmentsModule(QDockWidget, FORM_CLASS):
@@ -112,10 +108,7 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
             )
             self.keyLineEdit.setPlaceholderText('Insert Api Code')
         elif self.providersComboBox.currentText() == 'HERE':
-            items = [
-                'Car', 'HOV car', 'Pedestrian', 'Truck', 'Bicycle',
-                'Public transport', 'Public transport timetable',
-            ]
+            items = ['Car', 'Pedestrian', 'Truck']
             self.trafficCheckBox.setEnabled(True)
             self.highwaysCheckBox.setEnabled(False)
             self.highwaysCheckBox.setChecked(False)
@@ -196,7 +189,7 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
             """
             HERE options:
             start           string      lat and lng
-            mode            string      car or ?
+            mode            string      car, pedestrian or truck
             range           int         range for calculations
             rangetype       string      distance, time, consumption
             traffic         boolean     takes traffic
@@ -215,7 +208,7 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
                 link = '{url}\
                     ?app_id={key[0]}\
                     &app_code={key[1]}\
-                    &mode=shortest;{transport};traffic:{traffic}\
+                    &mode=fastest;{transport};traffic:{traffic}\
                     &start=geo!{start}\
                     &range={range}\
                     &rangetype={units}'.replace(' ', '').format(**params)
