@@ -223,6 +223,8 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
                     if e[1] == 401:
                         return 'invalid key'
                     continue
+                if r.getcode() == 403:
+                    return 'forbidden'
                 params['coordinates'] = json.loads(r.read())['response']['isoline'][0]['component'][0]['shape']
                 polygons.append(params)
         if polygons and not_found:
@@ -359,6 +361,12 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
             self.iface.messageBar().pushMessage(
                 u'Catchments',
                 u'Invalid API key',
+                level=QgsMessageBar.WARNING)
+            return 
+        elif polygons == 'forbidden':
+            self.iface.messageBar().pushMessage(
+                u'Catchments',
+                u'These credentials do not authorize access',
                 level=QgsMessageBar.WARNING)
             return 
         self.addPolygonsToMap(polygons)
