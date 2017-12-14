@@ -1,3 +1,6 @@
+1.0.8
+- fix: HERE API forbidden access exception
+
 1.0.7
 - fix: HERE supports only car, pedestrian and truck isolines
 - fix: empty catchment exception in Skobbler
