@@ -59,8 +59,9 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
         self.providersComboBox.addItems(['Skobbler', 'HERE'])
         self.modesComboBox.addItems(['Car', 'Bike', 'Pedestrian'])
         self.unitsComboBox.addItems(['Minutes', 'Meters'])
-        self.valueSpinBox.setValue(10)
         self.valueSpinBox.setMinimum(1)
+        self.valueSpinBox.setMaximum(99999)
+        self.valueSpinBox.setValue(10)
         self.getCatchments.setEnabled(False)
         self.getKeyLabel.setText('<html><head/><body><p>\
             <a href="https://developer.skobbler.com/getting-started/web#sec3">\
