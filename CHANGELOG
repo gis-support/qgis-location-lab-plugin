@@ -1,4 +1,7 @@
 1.0.9
+- switch to urllib2, here https exception
+
+1.0.9
 - fix: set maximum value for unit
 
 1.0.8

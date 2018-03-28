@@ -180,10 +180,9 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
                     &highways={highways}\
                     &response_type={response_type}'.replace(' ', '').format(**params)
                 try:
-                    r = urllib.urlopen(link)
-                except IOError as e:
-                    if e[1] == 401:
-                        return 'invalid key'
+                    r = urllib2.urlopen(link)
+                except urllib2.HTTPError as e:
+                    return 'invalid key'
                     continue
                 data = json.loads(r.read())
                 if data['status']['apiMessage'] == 'Route cannot be calculated.':
@@ -203,7 +202,7 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
             for p in points:
                 params = {
                     'source': self.providersComboBox.currentText(),
-                    'url': 'https://isoline.route.cit.api.here.com/routing/7.2/calculateisoline.json',
+                    'url': 'http://isoline.route.cit.api.here.com/routing/7.2/calculateisoline.json',
                     'key': self.keyLineEdit.text().split(':'),
                     'start': '{x},{y}'.format(x=p[1], y=p[0]),
                     'transport': HERE_PARAMS[self.modesComboBox.currentText()],
@@ -219,10 +218,9 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
                     &range={range}\
                     &rangetype={units}'.replace(' ', '').format(**params)
                 try:
-                    r = urllib.urlopen(link)
-                except IOError as e:
-                    if e[1] == 401:
-                        return 'invalid key'
+                    r = urllib2.urlopen(link)
+                except urllib2.HTTPError as e:
+                    return 'invalid key'
                     continue
                 if r.getcode() == 403:
                     return 'forbidden'
