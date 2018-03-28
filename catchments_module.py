@@ -30,7 +30,7 @@ from qgis.core import QgsCoordinateTransform, QgsCoordinateReferenceSystem, \
     QgsPoint
 import os.path
 import locale
-import urllib
+import urllib2
 import json
 
 locale.setlocale(locale.LC_ALL, '')
@@ -160,7 +160,7 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
                 params = {
                     'source': self.providersComboBox.currentText(),
                     'url': 'tor.skobbler.net/tor/RSngx/RealReach/json/20_5/en',
-                    'key': self.keyLineEdit.text(),
+                    'key': self.keyLineEdit.text().strip(),
                     'start': '{x},{y}'.format(x=p[1], y=p[0]),
                     'transport': self.modesComboBox.currentText().lower(),
                     'range': self.valueSpinBox.value() if self.unitsComboBox.currentText() == 'Meters' else self.valueSpinBox.value() * 60,
@@ -203,7 +203,7 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
                 params = {
                     'source': self.providersComboBox.currentText(),
                     'url': 'http://isoline.route.cit.api.here.com/routing/7.2/calculateisoline.json',
-                    'key': self.keyLineEdit.text().split(':'),
+                    'key': self.keyLineEdit.text().strip().split(':'),
                     'start': '{x},{y}'.format(x=p[1], y=p[0]),
                     'transport': HERE_PARAMS[self.modesComboBox.currentText()],
                     'range': self.valueSpinBox.value() if self.unitsComboBox.currentText() == 'Meters' else self.valueSpinBox.value() * 60,
