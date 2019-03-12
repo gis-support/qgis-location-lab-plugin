@@ -21,8 +21,8 @@
  ***************************************************************************/
  This script initializes the plugin, making it known to QGIS.
 """
-from PyQt4 import uic
-from PyQt4.QtGui import QDialog
+from qgis.PyQt import uic
+from qgis.PyQt.QtWidgets import QDialog
 import os.path
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(

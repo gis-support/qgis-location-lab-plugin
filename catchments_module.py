@@ -21,27 +21,25 @@
  ***************************************************************************/
  This script initializes the plugin, making it known to QGIS.
 """
-from PyQt4 import uic
-from PyQt4.QtCore import QSettings, Qt, QVariant
-from PyQt4.QtGui import QDialog, QDialogButtonBox, QDockWidget
-from qgis.gui import QgsMapLayerComboBox, QgsMapLayerProxyModel, QgsMessageBar
+from future import standard_library
+standard_library.install_aliases()
+from builtins import zip
+from builtins import str
+from qgis.PyQt import uic
+from qgis.PyQt.QtCore import QSettings, Qt, QVariant
+from qgis.PyQt.QtWidgets import QDialog, QDialogButtonBox, QDockWidget
+from qgis.gui import QgsMapLayerComboBox, QgsMessageBar
 from qgis.core import QgsCoordinateTransform, QgsCoordinateReferenceSystem, \
-    QgsGeometry, QgsField, QgsMapLayerRegistry, QgsVectorLayer, QgsFeature, \
-    QgsPoint
+    QgsGeometry, QgsField, QgsProject, QgsVectorLayer, QgsFeature, \
+    QgsPointXY, Qgis, QgsWkbTypes, QgsMapLayerProxyModel
 import os.path
 import locale
-import urllib2
+import urllib.request, urllib.parse, urllib.error
 import json
 
 locale.setlocale(locale.LC_ALL, '')
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'catchments_module.ui'))
-
-HERE_PARAMS = {
-    'Car': 'car',
-    'Pedestrian': 'pedestrian',
-    'Truck': 'truck'
-}
 
 class CatchmentsModule(QDockWidget, FORM_CLASS):
     def __init__(self, parent, parents=None):
@@ -49,6 +47,17 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
         self.setupUi(self)
         self.parent = parent
         self.iface = parent.iface
+        self.HERE_PARAMS = {
+            self.tr('Car'): 'car',
+            self.tr('Pedestrian'): 'pedestrian',
+            self.tr('Truck'): 'truck'
+        }
+
+        self.SKOBBLER_PARAMS = {
+            self.tr('Car'): 'car',
+            self.tr('Bike'): 'bike',
+            self.tr('Pedestrian'): 'pedestrian'
+        }
         self.fillDialog()
 
     def fillDialog(self):
@@ -57,8 +66,8 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
         self.layerComboBox.setFilters(QgsMapLayerProxyModel.PointLayer)
         self.layersLayout.addWidget(self.layerComboBox)
         self.providersComboBox.addItems(['Skobbler', 'HERE'])
-        self.modesComboBox.addItems(['Car', 'Bike', 'Pedestrian'])
-        self.unitsComboBox.addItems(['Minutes', 'Meters'])
+        self.modesComboBox.addItems([self.tr('Car'), self.tr('Bike'), self.tr('Pedestrian')])
+        self.unitsComboBox.addItems([self.tr('Minutes'), self.tr('Meters')])
         self.valueSpinBox.setMinimum(1)
         self.valueSpinBox.setMaximum(99999)
         self.valueSpinBox.setValue(10)
@@ -79,7 +88,7 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
         self.getCatchments.clicked.connect(self.run)
 
     def disableUnnecessaryParams(self):
-        if self.modesComboBox.currentText() == 'Pedestrian':
+        if self.modesComboBox.currentText() == self.tr('Pedestrian'):
             self.trafficCheckBox.setEnabled(False)
             self.highwaysCheckBox.setEnabled(False)
             self.tollsCheckBox.setEnabled(False)
@@ -98,7 +107,7 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
     def changeProvider(self):
         self.modesComboBox.clear()
         if self.providersComboBox.currentText() == 'Skobbler':
-            items = ['Car', 'Bike', 'Pedestrian']
+            items = [self.tr('Car'), self.tr('Bike'), self.tr('Pedestrian')]
             self.highwaysCheckBox.setEnabled(True)
             self.tollsCheckBox.setEnabled(True)
             self.trafficCheckBox.setEnabled(False)
@@ -107,9 +116,9 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
                 <a href="https://developer.skobbler.com/apikeys">\
                 <span style=" text-decoration: underline; color:#0000ff;">Get key</span></a></p></body></html>'
             )
-            self.keyLineEdit.setPlaceholderText('Insert Api Code')
+            self.keyLineEdit.setPlaceholderText(self.tr('Insert Api Code'))
         elif self.providersComboBox.currentText() == 'HERE':
-            items = ['Car', 'Pedestrian', 'Truck']
+            items = [self.tr('Car'), self.tr('Pedestrian'), self.tr('Truck')]
             self.trafficCheckBox.setEnabled(True)
             self.highwaysCheckBox.setEnabled(False)
             self.highwaysCheckBox.setChecked(False)
@@ -119,7 +128,7 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
                 <a href="https://developer.here.com/?create=Evaluation&keepState=true&step=account">\
                 <span style=" text-decoration: underline; color:#0000ff;">Get key</span></a></p></body></html>'
             )
-            self.keyLineEdit.setPlaceholderText('Insert App ID and App Code separated by \':\'')
+            self.keyLineEdit.setPlaceholderText(self.tr('Insert App ID and App Code separated by \':\''))
         self.modesComboBox.addItems(items)
         self.loadKey()
 
@@ -132,7 +141,7 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
         self.keyLineEdit.setText(QSettings().value(value) or '')
 
     def getPoints(self, vl, features):
-        trans = QgsCoordinateTransform(vl.crs(), QgsCoordinateReferenceSystem(4326))
+        trans = QgsCoordinateTransform(vl.crs(), QgsCoordinateReferenceSystem(4326), QgsProject().instance())
         points = []
         for f in features:
             geom = f.geometry()
@@ -162,9 +171,9 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
                     'url': 'tor.skobbler.net/tor/RSngx/RealReach/json/20_5/en',
                     'key': self.keyLineEdit.text().strip(),
                     'start': '{x},{y}'.format(x=p[1], y=p[0]),
-                    'transport': self.modesComboBox.currentText().lower(),
-                    'range': self.valueSpinBox.value() if self.unitsComboBox.currentText() == 'Meters' else self.valueSpinBox.value() * 60,
-                    'units': 'meter' if self.unitsComboBox.currentText() == 'Meters' else 'sec',
+                    'transport': self.SKOBBLER_PARAMS[self.modesComboBox.currentText()],
+                    'range': self.valueSpinBox.value() if self.unitsComboBox.currentText() == self.tr('Meters') else self.valueSpinBox.value() * 60,
+                    'units': 'meter' if self.unitsComboBox.currentText() == self.tr('Meters') else 'sec',
                     'nonReachable': '0',
                     'toll': '1' if self.tollsCheckBox.isChecked() else '0',
                     'highways': '1' if self.highwaysCheckBox.isChecked() else '0',
@@ -180,11 +189,12 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
                     &highways={highways}\
                     &response_type={response_type}'.replace(' ', '').format(**params)
                 try:
-                    r = urllib2.urlopen(link)
-                except urllib2.HTTPError as e:
-                    return 'invalid key'
+                    r = urllib.request.urlopen(link)
+                except urllib.error.HTTPError as e:
+                    if e.code == 401:
+                        return 'invalid key'
                     continue
-                data = json.loads(r.read())
+                data = json.loads(r.read().decode())
                 if data['status']['apiMessage'] == 'Route cannot be calculated.':
                     not_found += 1
                     continue
@@ -205,9 +215,9 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
                     'url': 'http://isoline.route.cit.api.here.com/routing/7.2/calculateisoline.json',
                     'key': self.keyLineEdit.text().strip().split(':'),
                     'start': '{x},{y}'.format(x=p[1], y=p[0]),
-                    'transport': HERE_PARAMS[self.modesComboBox.currentText()],
-                    'range': self.valueSpinBox.value() if self.unitsComboBox.currentText() == 'Meters' else self.valueSpinBox.value() * 60,
-                    'units': 'distance' if self.unitsComboBox.currentText() == 'Meters' else 'time',
+                    'transport': self.HERE_PARAMS[self.modesComboBox.currentText()],
+                    'range': self.valueSpinBox.value() if self.unitsComboBox.currentText() == self.tr('Meters') else self.valueSpinBox.value() * 60,
+                    'units': 'distance' if self.unitsComboBox.currentText() == self.tr('Meters') else 'time',
                     'traffic': 'enabled' if self.trafficCheckBox.isChecked() else 'disabled'
                 }
                 link = '{url}\
@@ -218,41 +228,43 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
                     &range={range}\
                     &rangetype={units}'.replace(' ', '').format(**params)
                 try:
-                    r = urllib2.urlopen(link)
-                except urllib2.HTTPError as e:
-                    return 'invalid key'
-                    continue
-                if r.getcode() == 403:
-                    return 'forbidden'
-                params['coordinates'] = json.loads(r.read())['response']['isoline'][0]['component'][0]['shape']
+                    r = urllib.request.urlopen(link)
+                except urllib.error.HTTPError as e:
+                    if e.code == 401:
+                        return 'invalid key'
+                    elif e.code == 403:
+                        return 'forbidden'
+                    else:
+                        continue
+                params['coordinates'] = json.loads(r.read().decode())['response']['isoline'][0]['component'][0]['shape']
                 polygons.append(params)
         if polygons and not_found:
             self.iface.messageBar().pushMessage(
                 u'Catchments',
-                u'{} catchments not found'.format(not_found),
-                level=QgsMessageBar.INFO)
+                u'{} {}'.format(not_found, self.tr('catchments not found')),
+                level=Qgis.Info)
         return polygons
 
     def addPolygonsToMap(self, polygons):
-        if not QgsMapLayerRegistry.instance().mapLayersByName('Location Lab - catchments'):
+        if not QgsProject.instance().mapLayersByName('Location Lab - catchments'):
             vl = QgsVectorLayer('Polygon?crs=EPSG:4326', 'Location Lab - catchments', 'memory')
             pr = vl.dataProvider()
             vl.startEditing()
             pr.addAttributes(
                 [
                     QgsField('id', QVariant.Int),
-                    QgsField('provider', QVariant.String),
-                    QgsField('mode', QVariant.String),
-                    QgsField('value', QVariant.Int),
-                    QgsField('units', QVariant.String),
-                    QgsField('lat', QVariant.Double),
-                    QgsField('lon', QVariant.Double),
+                    QgsField(self.tr('provider'), QVariant.String),
+                    QgsField(self.tr('mode'), QVariant.String),
+                    QgsField(self.tr('value'), QVariant.Int),
+                    QgsField(self.tr('units'), QVariant.String),
+                    QgsField(self.tr('lat'), QVariant.Double),
+                    QgsField(self.tr('lon'), QVariant.Double),
                     QgsField('params', QVariant.String)
                 ]
             )
             vl.commitChanges()
-            QgsMapLayerRegistry.instance().addMapLayer(vl)
-        vl = QgsMapLayerRegistry.instance().mapLayersByName('Location Lab - catchments')[0]
+            QgsProject.instance().addMapLayer(vl)
+        vl = QgsProject.instance().mapLayersByName('Location Lab - catchments')[0]
         pr = vl.dataProvider()
         next_id = len(vl.allFeatureIds()) + 1
         for p in polygons:
@@ -262,13 +274,13 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
                 coordinates_x = [c for c in p['coordinates'][8::2]]
                 coordinates_y = [c for c in p['coordinates'][9::2]]
                 for x, y in zip(coordinates_x, coordinates_y):
-                    points.append(QgsPoint(x, y))
+                    points.append(QgsPointXY(x, y))
             elif p['source'] == 'HERE':
                 coordinates = [c.split(',') for c in p['coordinates']]
                 for xy in coordinates:
-                    points.append(QgsPoint(float(xy[1]), float(xy[0])))
+                    points.append(QgsPointXY(float(xy[1]), float(xy[0])))
             feature = QgsFeature()
-            feature.setGeometry(QgsGeometry.fromPolygon([points]))
+            feature.setGeometry(QgsGeometry.fromPolygonXY([points]))
             lat, lon = p['start'].split(',')
             for key in ['key', 'url', 'coordinates', 'start']: #unnecessary params
                 p.pop(key)
@@ -290,8 +302,9 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
                 vl.crs(),
                 self.iface.
                 mapCanvas().
-                mapRenderer().
-                destinationCrs()).
+                mapSettings().
+                destinationCrs(),
+                QgsProject().instance()).
             transform(vl.extent()))
         self.iface.mapCanvas().refresh()
 
@@ -310,10 +323,10 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
             features = [f for f in vl.selectedFeatures()]
         else:
             features = [f for f in vl.getFeatures()]
-        self.pointsLabel.setText('Number of points: {}'.format(len(features)))
+        self.pointsLabel.setText('{} {}'.format(self.tr('Number of points:'), len(features)))
         if len(features) > 5:
             self.getCatchments.setEnabled(False)
-            self.pointsLabel.setText('Number of points: {} (limit is 5)'.format(len(features)))
+            self.pointsLabel.setText('{} {} {}'.format(self.tr('Number of points:'), len(features), self.tr('(limit is 5)')))
         elif len(features) == 0:
             self.getCatchments.setEnabled(False)
         else:
@@ -329,8 +342,8 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
             if len(self.keyLineEdit.text().split(':')) != 2:
                 self.iface.messageBar().pushMessage(
                     u'Catchments',
-                    u'Invalid api key format, required app_id:app_code',
-                    level=QgsMessageBar.WARNING)
+                    self.tr(u'Invalid api key format, required app_id:app_code'),
+                    level=Qgis.Warning)
                 return False
         return True
 
@@ -343,8 +356,8 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
         if not features:
             self.iface.messageBar().pushMessage(
                 u'Catchments',
-                u'No geometry',
-                level=QgsMessageBar.WARNING)
+                self.tr(u'No geometry'),
+                level=Qgis.Warning)
             return
         points = self.getPoints(vl, features)
         if not self.checkApiKey():
@@ -353,19 +366,19 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
         if not polygons:
             self.iface.messageBar().pushMessage(
                 u'Catchments',
-                u'Catchments not found',
-                level=QgsMessageBar.WARNING)
+                self.tr(u'Catchments not found'),
+                level=Qgis.Warning)
             return
         elif polygons == 'invalid key':
             self.iface.messageBar().pushMessage(
                 u'Catchments',
-                u'Invalid API key',
-                level=QgsMessageBar.WARNING)
+                self.tr(u'Invalid API key'),
+                level=Qgis.Warning)
             return 
         elif polygons == 'forbidden':
             self.iface.messageBar().pushMessage(
                 u'Catchments',
-                u'These credentials do not authorize access',
-                level=QgsMessageBar.WARNING)
+                self.tr(u'These credentials do not authorize access'),
+                level=Qgis.Warning)
             return 
         self.addPolygonsToMap(polygons)

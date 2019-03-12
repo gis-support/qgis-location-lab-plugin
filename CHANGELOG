@@ -1,5 +1,11 @@
-1.0.9
-- switch to urllib2, here https exception
+2.0.1
+- here https exception
+- strip api keys
+
+2.0
+- codeporting to QGIS 3.x
+- fix: doubled Location Lab menu bar item
+- Polish translation
 
 1.0.9
 - fix: set maximum value for unit

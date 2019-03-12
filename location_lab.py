@@ -21,15 +21,18 @@
  ***************************************************************************/
  This script initializes the plugin, making it known to QGIS.
 """
-from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
-from PyQt4.QtGui import QAction, QIcon, QMessageBox, QMenu
+from __future__ import absolute_import
+from builtins import object
+from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
+from qgis.PyQt.QtWidgets import QAction, QMessageBox, QMenu
+from qgis.PyQt.QtGui import QIcon
 from qgis.gui import QgsMessageBar
-import resources
+from . import resources
 import os.path
-from catchments_module import CatchmentsModule
-from info_module import InfoModule
+from .catchments_module import CatchmentsModule
+from .info_module import InfoModule
 
-class LocationLab:
+class LocationLab(object):
 
     def __init__(self, iface):
         self.iface = iface
@@ -39,16 +42,13 @@ class LocationLab:
         locale_path = os.path.join(
             self.plugin_dir,
             'i18n',
-            'LocationLab{}.qm'.format(locale))
+            'catchments_{}.qm'.format(locale))
         if os.path.exists(locale_path):
             self.translator = QTranslator()
             self.translator.load(locale_path)
             if qVersion() > '4.3.3':
                 QCoreApplication.installTranslator(self.translator)
         self.actions = []
-        self.menu = QMenu(self.iface.mainWindow())
-        self.menu.setObjectName('locationLab')
-        self.menu.setTitle(u'&Location Lab')
         # Init modules
         self.catchmentsModule = CatchmentsModule(self)
         self.infoModule = InfoModule(self)
@@ -76,6 +76,18 @@ class LocationLab:
         return action
 
     def initGui(self):
+        menuBar = self.iface.mainWindow().menuBar()
+        self.menu = menuBar.findChild(QMenu,'locationLab')
+
+        if self.menu is None:
+            self.menu = QMenu(menuBar)
+            self.menu.setObjectName('locationLab')
+            self.menu.setTitle(u'&Location Lab')
+
+            menuBar.insertMenu(
+                self.iface.firstRightStandardMenu().menuAction(),
+                self.menu)
+
         self.add_action(
             ':/plugins/LocationLab/catchments.png',
             text=self.tr(u'Catchments'),
@@ -84,8 +96,12 @@ class LocationLab:
            ':/plugins/LocationLab/info.png',
            text=self.tr(u'Info'),
            callback=self.infoModule.show)
-        menuBar = self.iface.mainWindow().menuBar()
-        menuBar.insertMenu(self.iface.firstRightStandardMenu().menuAction(), self.menu)
 
     def unload(self):
-        self.menu.deleteLater()
+        try:
+            for action in self.actions:
+                self.menu.removeAction(action)
+            if self.menu.isEmpty():
+                self.menu.deleteLater()
+        except RuntimeError:
+            pass
