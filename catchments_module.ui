@@ -7,13 +7,13 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>529</height>
+    <height>495</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>400</width>
-    <height>529</height>
+    <height>495</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -135,20 +135,6 @@
      <widget class="QLabel" name="avoidLabel">
       <property name="text">
        <string>Parameters</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QCheckBox" name="tollsCheckBox">
-      <property name="text">
-       <string>Avoid tolls</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QCheckBox" name="highwaysCheckBox">
-      <property name="text">
-       <string>Avoid highways</string>
       </property>
      </widget>
     </item>

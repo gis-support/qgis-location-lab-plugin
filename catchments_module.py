@@ -50,12 +50,6 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
             self.tr('Pedestrian'): 'pedestrian',
             self.tr('Truck'): 'truck'
         }
-
-        self.SKOBBLER_PARAMS = {
-            self.tr('Car'): 'car',
-            self.tr('Bike'): 'bike',
-            self.tr('Pedestrian'): 'pedestrian'
-        }
         self.fillDialog()
 
     def fillDialog(self):
@@ -63,17 +57,14 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
         self.layerComboBox.setObjectName('layerComboBox')
         self.layerComboBox.setFilters(QgsMapLayerProxyModel.PointLayer)
         self.layersLayout.addWidget(self.layerComboBox)
-        self.providersComboBox.addItems(['Skobbler', 'HERE'])
-        self.modesComboBox.addItems([self.tr('Car'), self.tr('Bike'), self.tr('Pedestrian')])
+        self.providersComboBox.addItem('HERE')
+        self.modesComboBox.addItems([self.tr('Car'), self.tr('Pedestrian'), self.tr('Truck')])
+        self.trafficCheckBox.setEnabled(True)
         self.unitsComboBox.addItems([self.tr('Minutes'), self.tr('Meters')])
         self.valueSpinBox.setMinimum(1)
         self.valueSpinBox.setMaximum(99999)
         self.valueSpinBox.setValue(10)
         self.getCatchments.setEnabled(False)
-        self.getKeyLabel.setText('<html><head/><body><p>\
-            <a href="https://developer.skobbler.com/getting-started/web#sec3">\
-            <span style=" text-decoration: underline; color:#0000ff;">Get key</span></a></p></body></html>'
-        )
         self.connectFunctions()
         self.loadKey()
 
@@ -88,40 +79,15 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
     def disableUnnecessaryParams(self):
         if self.modesComboBox.currentText() == self.tr('Pedestrian'):
             self.trafficCheckBox.setEnabled(False)
-            self.highwaysCheckBox.setEnabled(False)
-            self.tollsCheckBox.setEnabled(False)
-            self.highwaysCheckBox.setChecked(False)
-            self.tollsCheckBox.setChecked(False)
             self.trafficCheckBox.setChecked(False)
-        elif self.providersComboBox.currentText() == 'Skobbler':
-            self.trafficCheckBox.setEnabled(False)
-            self.highwaysCheckBox.setEnabled(True)
-            self.tollsCheckBox.setEnabled(True)
         elif self.providersComboBox.currentText() == 'HERE':
             self.trafficCheckBox.setEnabled(True)
-            self.highwaysCheckBox.setEnabled(False)
-            self.tollsCheckBox.setEnabled(False)
 
     def changeProvider(self):
         self.modesComboBox.clear()
-        if self.providersComboBox.currentText() == 'Skobbler':
-            items = [self.tr('Car'), self.tr('Bike'), self.tr('Pedestrian')]
-            self.highwaysCheckBox.setEnabled(True)
-            self.tollsCheckBox.setEnabled(True)
-            self.trafficCheckBox.setEnabled(False)
-            self.trafficCheckBox.setChecked(False)
-            self.getKeyLabel.setText('<html><head/><body><p>\
-                <a href="https://developer.skobbler.com/apikeys">\
-                <span style=" text-decoration: underline; color:#0000ff;">Get key</span></a></p></body></html>'
-            )
-            self.keyLineEdit.setPlaceholderText(self.tr('Insert Api Code'))
-        elif self.providersComboBox.currentText() == 'HERE':
+        if self.providersComboBox.currentText() == 'HERE':
             items = [self.tr('Car'), self.tr('Pedestrian'), self.tr('Truck')]
             self.trafficCheckBox.setEnabled(True)
-            self.highwaysCheckBox.setEnabled(False)
-            self.highwaysCheckBox.setChecked(False)
-            self.tollsCheckBox.setChecked(False)
-            self.tollsCheckBox.setEnabled(False)
             self.getKeyLabel.setText('<html><head/><body><p>\
                 <a href="https://developer.here.com/?create=Evaluation&keepState=true&step=account">\
                 <span style=" text-decoration: underline; color:#0000ff;">Get key</span></a></p></body></html>'
@@ -153,52 +119,7 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
     def requestApi(self, points):
         polygons = []
         not_found = 0
-        if self.providersComboBox.currentText() == 'Skobbler':
-            """
-            Skobbler options:
-            start           string      Center of RealReach™ in GPS coordinates: Latitude, Longitude
-            transport       string      You can pick one of the transport options: pedestrian, bike, car
-            range           int         The range for which we calculate RealReach™
-            units           string      You can choose between sec and meter. 'Sec' is for time and 'Meter' is for distance
-            toll            boolean     You can specify whether to avoid or not the use of toll roads in route calculation
-            highways        boolean     Specifies whether to avoid or not the use of highways in route calculation
-            """
-            for p in points:
-                params = {
-                    'source': self.providersComboBox.currentText(),
-                    'url': 'tor.skobbler.net/tor/RSngx/RealReach/json/20_5/en',
-                    'key': self.keyLineEdit.text().strip(),
-                    'start': '{x},{y}'.format(x=p[1], y=p[0]),
-                    'transport': self.SKOBBLER_PARAMS[self.modesComboBox.currentText()],
-                    'range': self.valueSpinBox.value() if self.unitsComboBox.currentText() == self.tr('Meters') else self.valueSpinBox.value() * 60,
-                    'units': 'meter' if self.unitsComboBox.currentText() == self.tr('Meters') else 'sec',
-                    'nonReachable': '0',
-                    'toll': '1' if self.tollsCheckBox.isChecked() else '0',
-                    'highways': '1' if self.highwaysCheckBox.isChecked() else '0',
-                    'response_type': 'gps'
-                }
-                link = 'http://{key}.{url}/{key}\
-                    ?start={start}\
-                    &transport={transport}\
-                    &range={range}\
-                    &units={units}\
-                    &nonReachable={nonReachable}\
-                    &toll={toll}\
-                    &highways={highways}\
-                    &response_type={response_type}'.replace(' ', '').format(**params)
-                try:
-                    r = urllib.request.urlopen(link)
-                except urllib.error.HTTPError as e:
-                    if e.code == 401:
-                        return 'invalid key'
-                    continue
-                data = json.loads(r.read().decode())
-                if data['status']['apiMessage'] == 'Route cannot be calculated.':
-                    not_found += 1
-                    continue
-                params['coordinates'] = data['realReach']['gpsPoints']
-                polygons.append(params)
-        elif self.providersComboBox.currentText() == 'HERE':
+        if self.providersComboBox.currentText() == 'HERE':
             """
             HERE options:
             start           string      lat and lng
@@ -285,12 +206,7 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
         for p in polygons:
             feature = QgsFeature()
             points = []
-            if p['source'] == 'Skobbler':
-                coordinates_x = [c for c in p['coordinates'][8::2]]
-                coordinates_y = [c for c in p['coordinates'][9::2]]
-                for x, y in zip(coordinates_x, coordinates_y):
-                    points.append(QgsPointXY(x, y))
-            elif p['source'] == 'HERE':
+            if p['source'] == 'HERE':
                 coordinates = [c.split(',') for c in p['coordinates']]
                 for xy in coordinates:
                     points.append(QgsPointXY(float(xy[1]), float(xy[0])))
