@@ -21,7 +21,6 @@
  ***************************************************************************/
  This script initializes the plugin, making it known to QGIS.
 """
-from __future__ import absolute_import
 from builtins import object
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
 from qgis.PyQt.QtWidgets import QAction, QMessageBox, QMenu

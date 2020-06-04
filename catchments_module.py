@@ -21,8 +21,6 @@
  ***************************************************************************/
  This script initializes the plugin, making it known to QGIS.
 """
-from future import standard_library
-standard_library.install_aliases()
 from builtins import zip
 from builtins import str
 from qgis.PyQt import uic
@@ -128,7 +126,7 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
                 <a href="https://developer.here.com/?create=Evaluation&keepState=true&step=account">\
                 <span style=" text-decoration: underline; color:#0000ff;">Get key</span></a></p></body></html>'
             )
-            self.keyLineEdit.setPlaceholderText(self.tr('Insert App ID and App Code separated by \':\''))
+            self.keyLineEdit.setPlaceholderText(self.tr('Insert App ID:App Code or apiKey'))
         self.modesComboBox.addItems(items)
         self.loadKey()
 
@@ -209,24 +207,41 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
             rangetype       string      distance, time, consumption
             traffic         boolean     takes traffic
             """
+
+            key = self.keyLineEdit.text().strip().split(':')
+            with_id = False
+            if len(key) == 1:
+                url = 'https://isoline.route.ls.hereapi.com/routing/7.2/calculateisoline.json'
+            else:
+                url = 'https://isoline.route.cit.api.here.com/routing/7.2/calculateisoline.json'
+                with_id = True
+
             for p in points:
                 params = {
                     'source': self.providersComboBox.currentText(),
-                    'url': 'http://isoline.route.cit.api.here.com/routing/7.2/calculateisoline.json',
-                    'key': self.keyLineEdit.text().strip().split(':'),
+                    'url': url,
+                    'key': key,
                     'start': '{x},{y}'.format(x=p[1], y=p[0]),
                     'transport': self.HERE_PARAMS[self.modesComboBox.currentText()],
                     'range': self.valueSpinBox.value() if self.unitsComboBox.currentText() == self.tr('Meters') else self.valueSpinBox.value() * 60,
                     'units': 'distance' if self.unitsComboBox.currentText() == self.tr('Meters') else 'time',
                     'traffic': 'enabled' if self.trafficCheckBox.isChecked() else 'disabled'
                 }
-                link = '{url}\
-                    ?app_id={key[0]}\
-                    &app_code={key[1]}\
-                    &mode=fastest;{transport};traffic:{traffic}\
-                    &start=geo!{start}\
-                    &range={range}\
-                    &rangetype={units}'.replace(' ', '').format(**params)
+                if not with_id:
+                    link = '{url}\
+                        ?apiKey={key[0]}\
+                        &mode=fastest;{transport};traffic:{traffic}\
+                        &start=geo!{start}\
+                        &range={range}\
+                        &rangetype={units}'.replace(' ', '').format(**params)
+                else:
+                    link = '{url}\
+                        ?app_id={key[0]}\
+                        &app_code={key[1]}\
+                        &mode=fastest;{transport};traffic:{traffic}\
+                        &start=geo!{start}\
+                        &range={range}\
+                        &rangetype={units}'.replace(' ', '').format(**params)
                 try:
                     r = urllib.request.urlopen(link)
                 except urllib.error.HTTPError as e:
@@ -337,16 +352,6 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self)
         super(CatchmentsModule, self).show()
 
-    def checkApiKey(self):
-        if self.providersComboBox.currentText() == 'HERE':
-            if len(self.keyLineEdit.text().split(':')) != 2:
-                self.iface.messageBar().pushMessage(
-                    u'Catchments',
-                    self.tr(u'Invalid api key format, required app_id:app_code'),
-                    level=Qgis.Warning)
-                return False
-        return True
-
     def run(self):
         vl = self.layerComboBox.currentLayer()
         if self.selectCheckBox.isChecked():
@@ -360,8 +365,6 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
                 level=Qgis.Warning)
             return
         points = self.getPoints(vl, features)
-        if not self.checkApiKey():
-            return
         polygons = self.requestApi(points)
         if not polygons:
             self.iface.messageBar().pushMessage(
