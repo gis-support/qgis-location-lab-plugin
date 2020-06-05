@@ -34,6 +34,7 @@ import os.path
 import locale
 import urllib.request, urllib.parse, urllib.error
 import json
+import requests
 
 locale.setlocale(locale.LC_ALL, '')
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
@@ -50,6 +51,12 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
             self.tr('Pedestrian'): 'pedestrian',
             self.tr('Truck'): 'truck'
         }
+        self.OPENROUTE_PARAMS = {
+            self.tr('Bike'): 'cycling-regular',
+            self.tr('Car'): 'driving-car',
+            self.tr('Pedestrian'): 'foot-walking',
+            self.tr('Truck'): 'driving-hgv'
+        }
         self.fillDialog()
 
     def fillDialog(self):
@@ -57,7 +64,7 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
         self.layerComboBox.setObjectName('layerComboBox')
         self.layerComboBox.setFilters(QgsMapLayerProxyModel.PointLayer)
         self.layersLayout.addWidget(self.layerComboBox)
-        self.providersComboBox.addItem('HERE')
+        self.providersComboBox.addItems(['HERE', 'OpenRouteService'])
         self.modesComboBox.addItems([self.tr('Car'), self.tr('Pedestrian'), self.tr('Truck')])
         self.trafficCheckBox.setEnabled(True)
         self.unitsComboBox.addItems([self.tr('Minutes'), self.tr('Meters')])
@@ -65,6 +72,10 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
         self.valueSpinBox.setMaximum(99999)
         self.valueSpinBox.setValue(10)
         self.getCatchments.setEnabled(False)
+        self.getKeyLabel.setText('<html><head/><body><p>\
+            <a href="https://developer.here.com/?create=Evaluation&keepState=true&step=account">\
+            <span style=" text-decoration: underline; color:#0000ff;">Get key</span></a></p></body></html>'
+        )
         self.connectFunctions()
         self.loadKey()
 
@@ -93,6 +104,14 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
                 <span style=" text-decoration: underline; color:#0000ff;">Get key</span></a></p></body></html>'
             )
             self.keyLineEdit.setPlaceholderText(self.tr('Insert App ID:App Code or apiKey'))
+        elif self.providersComboBox.currentText() == 'OpenRouteService':
+            items = [self.tr('Bike'), self.tr('Car'), self.tr('Pedestrian'), self.tr('Truck')]
+            self.trafficCheckBox.setEnabled(False)
+            self.getKeyLabel.setText('<html><head/><body><p>\
+                <a href="https://openrouteservice.org/plans/">\
+                <span style=" text-decoration: underline; color:#0000ff;">Get key</span></a></p></body></html>'
+            )
+            self.keyLineEdit.setPlaceholderText(self.tr('Insert API key'))
         self.modesComboBox.addItems(items)
         self.loadKey()
 
@@ -174,6 +193,46 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
                         continue
                 params['coordinates'] = json.loads(r.read().decode())['response']['isoline'][0]['component'][0]['shape']
                 polygons.append(params)
+        elif self.providersComboBox.currentText() == 'OpenRouteService':
+            """
+            OpenRouteService options:
+            locations      array       lng
+            range          array(int)  seconds for time, meters for distance
+            range_type     string      time/distance
+            profile        string      driving-car/driving-hgv/foot-walking (query parameter)
+            """
+            source = self.providersComboBox.currentText()
+            url = 'https://api.openrouteservice.org/v2/isochrones'
+
+            mode = self.OPENROUTE_PARAMS[self.modesComboBox.currentText()]
+            location_coords = [[p[0], p[1]] for p in points]
+            data = {
+                'locations': location_coords,
+                'range': [self.valueSpinBox.value()] if self.unitsComboBox.currentText() == self.tr('Meters')\
+                    else [self.valueSpinBox.value() * 60],
+                'range_type': 'distance' if self.unitsComboBox.currentText() == self.tr('Meters') else 'time',
+                'attributes': ['reachfactor']
+            }
+            r = requests.post(
+                f'{url}/{mode}',
+                json=data,
+                headers={'Authorization': self.keyLineEdit.text().strip()}
+            )
+            if r.status_code == 403:
+                polygons = r.json()['error']
+            elif r.status_code == 200:
+                data.update({
+                    'source': source,
+                    'url': url
+                })
+                features = r.json()['features']
+                for index, feature in enumerate(features):
+                    feature_coords = feature['geometry']['coordinates'][0]
+                    feature_data = dict(data)
+                    feature_data.update({'start': f'{location_coords[index][0]}, {location_coords[index][1]}'})
+                    feature_data['coordinates'] = [str(c[1])+ ',' + str(c[0]) for c in feature_coords]
+                    polygons.append(feature_data)
+
         if polygons and not_found:
             self.iface.messageBar().pushMessage(
                 u'Catchments',
@@ -206,7 +265,7 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
         for p in polygons:
             feature = QgsFeature()
             points = []
-            if p['source'] == 'HERE':
+            if p['source'] == 'HERE' or p['source'] == 'OpenRouteService':
                 coordinates = [c.split(',') for c in p['coordinates']]
                 for xy in coordinates:
                     points.append(QgsPointXY(float(xy[1]), float(xy[0])))
@@ -214,7 +273,8 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
             feature.setGeometry(QgsGeometry.fromPolygonXY([points]))
             lat, lon = p['start'].split(',')
             for key in ['key', 'url', 'coordinates', 'start']: #unnecessary params
-                p.pop(key)
+                if key in p.keys():
+                    p.pop(key)
             feature.setAttributes([
                 next_id,
                 self.providersComboBox.currentText(),
@@ -300,4 +360,10 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
                 self.tr(u'These credentials do not authorize access'),
                 level=Qgis.Warning)
             return 
+        elif polygons == 'Daily quota reached or API key unauthorized':
+            self.iface.messageBar().pushMessage(
+                u'Catchments',
+                self.tr(u'Openservice API daily quota reached or API key unauthorized'),
+                level=Qgis.Warning)
+            return
         self.addPolygonsToMap(polygons)
