@@ -1,8 +1,11 @@
+2.1
+- change plugin name to Location Lab
+
 2.0.2
 - removed Skobbler support
 - fixed minor import issues
 - added new HERE API authentication
-- added OpenRoudeService support
+- added OpenRouteService support
 
 2.0.1
 - here https exception
