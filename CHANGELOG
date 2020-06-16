@@ -1,3 +1,9 @@
+2.0.2
+- removed Skobbler support
+- fixed minor import issues
+- added new HERE API authentication
+- added OpenRoudeService support
+
 2.0.1
 - here https exception
 - strip api keys
