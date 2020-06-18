@@ -29,7 +29,7 @@ from qgis.PyQt.QtWidgets import QDialog, QDialogButtonBox, QDockWidget
 from qgis.gui import QgsMapLayerComboBox, QgsMessageBar
 from qgis.core import QgsCoordinateTransform, QgsCoordinateReferenceSystem, \
     QgsGeometry, QgsField, QgsProject, QgsVectorLayer, QgsFeature, \
-    QgsPointXY, Qgis, QgsWkbTypes, QgsMapLayerProxyModel
+    QgsPointXY, Qgis, QgsWkbTypes, QgsMapLayerProxyModel, QgsFieldProxyModel
 import os.path
 import locale
 import urllib.request, urllib.parse, urllib.error
@@ -63,6 +63,7 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
         self.layerComboBox = QgsMapLayerComboBox(self)
         self.layerComboBox.setObjectName('layerComboBox')
         self.layerComboBox.setFilters(QgsMapLayerProxyModel.PointLayer)
+        self.fieldsComboBox.setFilters(QgsFieldProxyModel.Int | QgsFieldProxyModel.LongLong)
         self.layersLayout.addWidget(self.layerComboBox)
         self.providersComboBox.addItems(['HERE', 'OpenRouteService'])
         self.modesComboBox.addItems([self.tr('Car'), self.tr('Pedestrian'), self.tr('Truck')])
@@ -262,7 +263,11 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
         vl = QgsProject.instance().mapLayersByName('Location Lab - catchments')[0]
         pr = vl.dataProvider()
         next_id = len(vl.allFeatureIds()) + 1
-        for p in polygons:
+        id_field = self.fieldsComboBox.currentField()
+        if id_field:
+            layer = self.layerComboBox.currentLayer()
+            new_ids = [feature.attribute(id_field) for feature in list(layer.getFeatures())]
+        for index, p in enumerate(polygons):
             feature = QgsFeature()
             points = []
             if p['source'] == 'HERE' or p['source'] == 'OpenRouteService':
@@ -276,7 +281,7 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
                 if key in p.keys():
                     p.pop(key)
             feature.setAttributes([
-                next_id,
+                next_id if not id_field else new_ids[index],
                 self.providersComboBox.currentText(),
                 self.modesComboBox.currentText().lower(),
                 self.valueSpinBox.value(),
@@ -301,6 +306,7 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
 
     def changeLayerEvent(self):
         vl = self.layerComboBox.currentLayer()
+        self.fieldsComboBox.setLayer(vl)
         if not vl:
             return
         self.updateFeaturesQuantity()
