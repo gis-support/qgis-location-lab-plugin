@@ -98,6 +98,7 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
     def changeProvider(self):
         self.modesComboBox.clear()
         if self.providersComboBox.currentText() == 'HERE':
+            self.getCatchments.setToolTip('')
             items = [self.tr('Car'), self.tr('Pedestrian'), self.tr('Truck')]
             self.trafficCheckBox.setEnabled(True)
             self.getKeyLabel.setText('<html><head/><body><p>\
@@ -106,6 +107,9 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
             )
             self.keyLineEdit.setPlaceholderText(self.tr('Insert App ID:App Code or apiKey'))
         elif self.providersComboBox.currentText() == 'OpenRouteService':
+            self.getCatchments.setToolTip(
+                self.tr('Free Plan Directions (2.000 requests per day @40 requests per minute)')
+            )
             items = [self.tr('Bike'), self.tr('Car'), self.tr('Pedestrian'), self.tr('Truck')]
             self.trafficCheckBox.setEnabled(False)
             self.getKeyLabel.setText('<html><head/><body><p>\
@@ -156,13 +160,12 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
             else:
                 url = 'https://isoline.route.cit.api.here.com/routing/7.2/calculateisoline.json'
                 with_id = True
-
             for p in points:
                 params = {
                     'source': self.providersComboBox.currentText(),
                     'url': url,
                     'key': key,
-                    'start': '{x},{y}'.format(x=p[1], y=p[0]),
+                    'coords': '{x},{y}'.format(x=p[1], y=p[0]),
                     'transport': self.HERE_PARAMS[self.modesComboBox.currentText()],
                     'range': self.valueSpinBox.value() if self.unitsComboBox.currentText() == self.tr('Meters') else self.valueSpinBox.value() * 60,
                     'units': 'distance' if self.unitsComboBox.currentText() == self.tr('Meters') else 'time',
@@ -172,7 +175,6 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
                     link = '{url}\
                         ?apiKey={key[0]}\
                         &mode=fastest;{transport};traffic:{traffic}\
-                        &start=geo!{start}\
                         &range={range}\
                         &rangetype={units}'.replace(' ', '').format(**params)
                 else:
@@ -180,9 +182,13 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
                         ?app_id={key[0]}\
                         &app_code={key[1]}\
                         &mode=fastest;{transport};traffic:{traffic}\
-                        &start=geo!{start}\
                         &range={range}\
                         &rangetype={units}'.replace(' ', '').format(**params)
+                coords = params['coords']
+                if self.pointsRouteStartCheckBox.isChecked():
+                    link += f'&start=geo!{coords}'
+                else:
+                    link += f'&destination=geo!{coords}'
                 try:
                     r = urllib.request.urlopen(link)
                 except urllib.error.HTTPError as e:
@@ -214,6 +220,8 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
                 'range_type': 'distance' if self.unitsComboBox.currentText() == self.tr('Meters') else 'time',
                 'attributes': ['reachfactor']
             }
+            if self.pointsRouteStartCheckBox.isChecked():
+                data['location_type'] = 'destination'
             r = requests.post(
                 f'{url}/{mode}',
                 json=data,
@@ -230,7 +238,7 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
                 for index, feature in enumerate(features):
                     feature_coords = feature['geometry']['coordinates'][0]
                     feature_data = dict(data)
-                    feature_data.update({'start': f'{location_coords[index][0]}, {location_coords[index][1]}'})
+                    feature_data.update({'coords': f'{location_coords[index][0]}, {location_coords[index][1]}'})
                     feature_data['coordinates'] = [str(c[1])+ ',' + str(c[0]) for c in feature_coords]
                     polygons.append(feature_data)
 
@@ -276,7 +284,7 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
                     points.append(QgsPointXY(float(xy[1]), float(xy[0])))
             feature = QgsFeature()
             feature.setGeometry(QgsGeometry.fromPolygonXY([points]))
-            lat, lon = p['start'].split(',')
+            lat, lon = p['coords'].split(',')
             for key in ['key', 'url', 'coordinates', 'start']: #unnecessary params
                 if key in p.keys():
                     p.pop(key)
@@ -321,10 +329,7 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
         else:
             features = [f for f in vl.getFeatures()]
         self.pointsLabel.setText('{} {}'.format(self.tr('Number of points:'), len(features)))
-        if len(features) > 5:
-            self.getCatchments.setEnabled(False)
-            self.pointsLabel.setText('{} {} {}'.format(self.tr('Number of points:'), len(features), self.tr('(limit is 5)')))
-        elif len(features) == 0:
+        if len(features) == 0:
             self.getCatchments.setEnabled(False)
         else:
             self.getCatchments.setEnabled(True)
