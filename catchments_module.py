@@ -117,6 +117,7 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
                 <span style=" text-decoration: underline; color:#0000ff;">Get key</span></a></p></body></html>'
             )
             self.keyLineEdit.setPlaceholderText(self.tr('Insert API key'))
+        self.updateFeaturesQuantity()
         self.modesComboBox.addItems(items)
         self.loadKey()
 
@@ -329,7 +330,10 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
         else:
             features = [f for f in vl.getFeatures()]
         self.pointsLabel.setText('{} {}'.format(self.tr('Number of points:'), len(features)))
-        if len(features) == 0:
+        if len(features) > 5 and self.providersComboBox.currentText() == 'OpenRouteService':
+            self.getCatchments.setEnabled(False)
+            self.pointsLabel.setText('{} {} {}'.format(self.tr('Number of points:'), len(features), self.tr('(limit is 5)')))
+        elif len(features) == 0:
             self.getCatchments.setEnabled(False)
         else:
             self.getCatchments.setEnabled(True)
