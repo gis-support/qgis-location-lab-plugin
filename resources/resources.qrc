@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/plugins/LocationLab" >
+        <file>catchments/catchments.png</file>
+        <file>catchments/info.png</file>
+	    <file>geocoder/geocoder.png</file>
+    </qresource>
+</RCC>

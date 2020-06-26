@@ -26,14 +26,14 @@ from qgis.PyQt.QtWidgets import QDialog
 import os.path
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'info_module.ui'))
+    os.path.dirname(__file__), 'info.ui'))
 
-class InfoModule(QDialog, FORM_CLASS):
+class Info(QDialog, FORM_CLASS):
     def __init__(self, parent, parents=None):
-        super(InfoModule, self).__init__(parents)
+        super(Info, self).__init__(parents)
         self.setupUi(self)
         self.parent = parent
         self.iface = parent.iface
 
     def accept(self):
-        super(InfoModule, self).accept()
+        super(Info, self).accept()

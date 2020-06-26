@@ -26,10 +26,11 @@ from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
 from qgis.PyQt.QtWidgets import QAction, QMessageBox, QMenu
 from qgis.PyQt.QtGui import QIcon
 from qgis.gui import QgsMessageBar
-from . import resources
+from .resources import resources
 import os.path
-from .catchments_module import CatchmentsModule
-from .info_module import InfoModule
+from .modules.catchments.main import Catchments
+from .modules.catchments.info import Info
+from .modules.geocoder.main import Geocoder
 
 class LocationLab(object):
 
@@ -41,7 +42,7 @@ class LocationLab(object):
         locale_path = os.path.join(
             self.plugin_dir,
             'i18n',
-            'catchments_{}.qm'.format(locale))
+            'location_lab_{}.qm'.format(locale))
         if os.path.exists(locale_path):
             self.translator = QTranslator()
             self.translator.load(locale_path)
@@ -49,12 +50,13 @@ class LocationLab(object):
                 QCoreApplication.installTranslator(self.translator)
         self.actions = []
         # Init modules
-        self.catchmentsModule = CatchmentsModule(self)
-        self.infoModule = InfoModule(self)
+        self.catchmentsModule = Catchments(self)
+        self.infoModule = Info(self)
+        self.geocoderModule = Geocoder(self)
         
 
     def tr(self, message):
-        return QCoreApplication.translate('Catchments', message)
+        return QCoreApplication.translate('LocationLab', message)
 
     def add_action(
         self,
@@ -88,13 +90,18 @@ class LocationLab(object):
                 self.menu)
 
         self.add_action(
-            ':/plugins/LocationLab/catchments.png',
+            ':/plugins/LocationLab/catchments/catchments.png',
             text=self.tr(u'Catchments'),
             callback=self.catchmentsModule.show)
         self.add_action(
-           ':/plugins/LocationLab/info.png',
+           ':/plugins/LocationLab/catchments/info.png',
            text=self.tr(u'Info'),
            callback=self.infoModule.show)
+        self.add_action(
+            ':/plugins/LocationLab/geocoder/geocoder.png',
+            text=self.tr(u'Geocoder'),
+            callback=self.geocoderModule.show)
+
 
     def unload(self):
         try:

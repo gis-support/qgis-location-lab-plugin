@@ -24,7 +24,7 @@
 from builtins import zip
 from builtins import str
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import QSettings, Qt, QVariant
+from qgis.PyQt.QtCore import QSettings, Qt, QVariant, QCoreApplication
 from qgis.PyQt.QtWidgets import QDialog, QDialogButtonBox, QDockWidget
 from qgis.gui import QgsMapLayerComboBox, QgsMessageBar
 from qgis.core import QgsCoordinateTransform, QgsCoordinateReferenceSystem, \
@@ -38,11 +38,11 @@ import requests
 
 locale.setlocale(locale.LC_ALL, '')
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'catchments_module.ui'))
+    os.path.dirname(__file__), 'catchments.ui'))
 
-class CatchmentsModule(QDockWidget, FORM_CLASS):
+class Catchments(QDockWidget, FORM_CLASS):
     def __init__(self, parent, parents=None):
-        super(CatchmentsModule, self).__init__(parents)
+        super(Catchments, self).__init__(parents)
         self.setupUi(self)
         self.parent = parent
         self.iface = parent.iface
@@ -58,6 +58,9 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
             self.tr('Truck'): 'driving-hgv'
         }
         self.fillDialog()
+
+    def tr(self, message):
+        return QCoreApplication.translate('Catchments', message)
 
     def fillDialog(self):
         self.layerComboBox = QgsMapLayerComboBox(self)
@@ -341,7 +344,7 @@ class CatchmentsModule(QDockWidget, FORM_CLASS):
     def show(self):
         self.changeLayerEvent()
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self)
-        super(CatchmentsModule, self).show()
+        super(Catchments, self).show()
 
     def run(self):
         vl = self.layerComboBox.currentLayer()

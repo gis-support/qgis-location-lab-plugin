@@ -2,3 +2,4 @@ syntax: glob
 *.bak
 __pycache__/*
 *.pyc
+zip_build
