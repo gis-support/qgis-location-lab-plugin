@@ -9,9 +9,6 @@ class GeocoderORS(GeocoderAbstract):
     API_URL = 'https://api.openrouteservice.org/geocode/search/structured'
     NAME = 'OpenRouteService'
 
-    def __init__(self, parent):
-        super(GeocoderORS, self).__init__(parent=parent)
-
     def createApiRequest(self, parameters):
         try:
             request = urllib.request.urlopen(self._buildRequestUrl(parameters))

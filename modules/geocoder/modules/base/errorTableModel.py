@@ -1,4 +1,4 @@
-from qgis.PyQt.QtCore import QAbstractTableModel, Qt, QModelIndex
+from qgis.PyQt.QtCore import QAbstractTableModel, Qt, QModelIndex, QCoreApplication
 
 class ErrorTableModel(QAbstractTableModel):
 
@@ -26,9 +26,9 @@ class ErrorTableModel(QAbstractTableModel):
             if section == 0:
                 return 'ID'
             elif section == 1:
-                return 'Address'
+                return self.tr('Address')
             elif section == 2:
-                return 'Error message'
+                return self.tr('Error message')
 
     def data(self, index, role):
         if not index.isValid():
@@ -49,3 +49,6 @@ class ErrorTableModel(QAbstractTableModel):
         self.beginRemoveRows(parent, 0, self.rowCount() - 1)
         self.items = []
         self.endRemoveRows()
+
+    def tr(self, message):
+        return QCoreApplication.translate('ErrorTable', message)
