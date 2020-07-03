@@ -240,8 +240,9 @@ class Geocoder(object):
                 )
                 return
             elif error:
+                full_address = ', '.join([self.geocode_parameters['locality'][id], address])
                 self.geocoder.error_table_model.insertRows([
-                    {'id': id + 1, 'address': address, 'error': error}
+                    {'id': id + 1, 'address': full_address, 'error': error}
                 ])
             else:
                 new_features = []
