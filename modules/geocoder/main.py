@@ -102,6 +102,7 @@ class Geocoder(object):
                 if self._checkLayerGeometry(layer):
                     self.layers.add(layer.name())
             self.dlg.inComboBox.addItems(self.layers)
+            self.updateFieldNames()
         else:
             for layer in layers:
                 if not isinstance(layer, str):

@@ -6,7 +6,6 @@ import csv
 import json
 import xml.etree.cElementTree as et
 import urllib.request
-import requests
 
 class GeocoderHERE(GeocoderAbstract):
     
@@ -14,6 +13,14 @@ class GeocoderHERE(GeocoderAbstract):
     NAME = 'HERE'
 
     def geocode(self, parent_layer):
+        self.parent.dlg.progressBar.setValue(0)
+        self.parent.iface.messageBar().pushMessage(
+            self.parent.name,
+            'HERE geocoding not yet supported',
+            level=Qgis.Warning
+        )
+        return
+        """
         response = self.createApiRequest()
         request_id = response.get('id')
         error = response.get('error')
@@ -26,6 +33,7 @@ class GeocoderHERE(GeocoderAbstract):
             return
         result = self.getJobResult(request_id)
         return True
+        """
 
     def createApiRequest(self):
         request_url = self.API_URL+f'?&apiKey={self.api_key}&action=run&header=true&inDelim=|&outDelim=|&outCols=recId,street,houseNumber,postalCode,city&outputCombined=True&language=pl-PL'
