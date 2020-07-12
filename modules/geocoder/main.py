@@ -4,6 +4,7 @@ from qgis.PyQt.QtCore import QSettings, QVariant, Qt, QCoreApplication, QObject
 from qgis.PyQt.QtWidgets import QMessageBox, QWidget, QMenu, QFileDialog, QTableWidget, QHeaderView, QTableWidgetItem
 
 from .modules.openrouteservice.geocoder import GeocoderORS
+from .modules.here.geocoder import GeocoderHERE
 from .geocoder_dialog import GeocoderDialog
 import os.path
 import locale
@@ -26,6 +27,7 @@ class Geocoder(object):
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
 
+        self.name = 'Location Lab: Geocoder'
         # Create the dialog (after translation) and keep reference
         self.dlg = GeocoderDialog()
         # Declare instance attributes
@@ -39,7 +41,7 @@ class Geocoder(object):
         self.dlg.sObjCheckBox.clicked.connect(self.countFeatures)
         self.dlg.keyLineEdit.textChanged.connect(self.saveKey)
         self.geocoder = GeocoderORS(self)
-        APIs = ['OpenRouteService']
+        APIs = ['OpenRouteService', 'HERE']
         self.dlg.apiComboBox.addItems(APIs)
         self.listLayers()
 
@@ -47,10 +49,12 @@ class Geocoder(object):
     def tr(self, message):
         return QCoreApplication.translate('Geocoder', message)
 
+
     def show(self):
         self.chooseApi()
         self.updateFieldNames()
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dlg)
+
 
     def saveKey(self):
         api = self.dlg.apiComboBox.currentText()
@@ -76,8 +80,12 @@ class Geocoder(object):
             self.geocoder = GeocoderORS(self)
             self.loadKey()
             self.dlg.failedRequestsTableView.setModel(self.geocoder.error_table_model)
+        elif self.dlg.apiComboBox.currentText() == 'HERE':
+            self.dlg.parametersWidget.setVisible(True)
+            self.geocoder = GeocoderHERE(self)
+            self.loadKey()
+            self.dlg.failedRequestsTableView.setModel(self.geocoder.error_table_model)
         else:
-            #another api
             self.dlg.parametersWidget.setVisible(False)
 
     def listLayers(self, layers=None):
@@ -185,17 +193,7 @@ class Geocoder(object):
             features = self.curLayer.getFeatures()
         else:
             features = self.curLayer.getSelectedFeatures()
-        if self.geocoder.NAME == 'OpenRouteService':
-            self.geocode_parameters = defaultdict(list)
-            for feature in features:
-                address = ' '.join([
-                    self.getFeatureEncodedValue(feature, self.dlg.streetComboBox.currentText()),
-                    self.getFeatureEncodedValue(feature, self.dlg.houseNumberComboBox.currentText())
-                ])
-                self.geocode_parameters['address'].append(address)
-                self.geocode_parameters['postalcode'].append(self.getFeatureEncodedValue(feature, self.dlg.zipComboBox.currentText()))
-                self.geocode_parameters['locality'].append(self.getFeatureEncodedValue(feature, self.dlg.cityComboBox.currentText()))
-                self.feature_attributes.append(feature.attributes())
+        self.geocoder.setParams(features)
 
 
     def drawPoints(self):
@@ -203,10 +201,9 @@ class Geocoder(object):
             self.defineParams()
         except:
             self.iface.messageBar().pushMessage(
-                'Location Lab: Geocoder',
+                self.name,
                 self.tr(u'Unknown error occurred'),
                 level=Qgis.Critical)
-            return
         outlayer = QgsVectorLayer('Point?crs=EPSG:4326', 'tempGeocoderLayer', 'memory')
         if self.dlg.saveChkb.isChecked():
             saveFile = QFileDialog.getSaveFileName(None, self.tr('Save to...'), filter='*.shp') #returns tuple (path, extension)
@@ -215,54 +212,15 @@ class Geocoder(object):
             QgsVectorFileWriter.writeAsVectorFormat(
                 outlayer, fileName, "utf-8", outlayer.crs(), "ESRI Shapefile")
             outlayer = QgsVectorLayer(fileName, layerName, 'ogr')
-        dp = outlayer.dataProvider()
-        dp.addAttributes([QgsField('ID', QVariant.Int)] + self.curLayer.dataProvider().fields().toList())
-        outlayer.updateFields()
 
-        progress = 0
-        self.dlg.progressBar.setValue(progress)
-        for id, attr in enumerate(self.feature_attributes):
-            address = self.geocode_parameters['address'][id]
-            request_params = {
-                'address': urllib.parse.quote(address),
-                'postalcode': self.geocode_parameters['postalcode'][id],
-                'locality': urllib.parse.quote(self.geocode_parameters['locality'][id]),
-            }
+        geocode = self.geocoder.geocode(outlayer)
 
-            geocoder_response = self.geocoder.createApiRequest(request_params)
-
-            error = geocoder_response.get('error')
-            if error == 'Invalid API Key':
-                self.iface.messageBar().pushMessage(
-                    'Location Lab: Geocoder',
-                    error,
-                    level=Qgis.Critical
-                )
-                return
-            elif error:
-                full_address = ', '.join([self.geocode_parameters['locality'][id], address])
-                self.geocoder.error_table_model.insertRows([
-                    {'id': id + 1, 'address': full_address, 'error': error}
-                ])
-            else:
-                new_features = []
-                for resp_feature in geocoder_response.get('features'):
-                    coords = resp_feature['geometry']['coordinates']
-                    point = QgsPointXY(float(coords[0]), float(coords[1]))
-                    new_feature = QgsFeature()
-                    new_feature.setGeometry(QgsGeometry.fromPointXY(point))
-                    new_feature.setAttributes([id + 1] + attr)
-                    new_features.append(new_feature)
-                dp.addFeatures(new_features)
-                outlayer.updateExtents()
-            progress += 1
-            self.dlg.progressBar.setValue(progress)
+        if geocode:
             QgsProject.instance().addMapLayer(outlayer)
-
-        self.iface.messageBar().pushMessage(
-            'Location Lab: Geocoder',
-            self.tr(u'Geocoding successful'),
-            level=Qgis.Success)
+            self.iface.messageBar().pushMessage(
+                self.name,
+                self.tr(u'Geocoding successful'),
+                level=Qgis.Success)
 
 
     def countFeatures(self):
@@ -292,6 +250,10 @@ class Geocoder(object):
         self.geocoder.error_table_model.clear()
         if self.drawPoints():
             super(Geocoder, self).dlg.accept()
+
+    def addFieldsToLayer(self, layer):
+        layer.dataProvider().addAttributes([QgsField('ID', QVariant.Int)] + self.curLayer.dataProvider().fields().toList())
+        layer.updateFields()
 
     def _encode(self, val):
         if isinstance(val,(int, float)):
