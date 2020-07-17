@@ -7,5 +7,8 @@ SOURCES = ../__init__.py \
 ../modules/catchments/info.py \
 ../location_lab.py \
 ../modules/geocoder/main.py \
-../modules/geocoder/modules/base/errorTableModel.py
+../modules/geocoder/modules/base/errorTableModel.py \
+../modules/geocoder/modules/here/geocoder.py \
+../modules/geocoder/modules/openrouteservice/geocoder.py \
+../modules/geocoder/modules/here/errorTableModel.py
 TRANSLATIONS = location_lab_pl.ts

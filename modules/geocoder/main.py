@@ -160,14 +160,10 @@ class Geocoder(object):
                 break
         try:
             fieldNames = [field.name() for field in self.curLayer.dataProvider().fields()]
-            if self.dlg.apiComboBox.currentText() == 'OpenRouteService':
-                self.dlg.streetComboBox.addItems(fieldNames)
-                self.dlg.houseNumberComboBox.addItems(fieldNames)
-                self.dlg.zipComboBox.addItems(fieldNames)
-                self.dlg.cityComboBox.addItems(fieldNames)
-            else:
-                #another api
-                pass
+            self.dlg.streetComboBox.addItems(fieldNames)
+            self.dlg.houseNumberComboBox.addItems(fieldNames)
+            self.dlg.zipComboBox.addItems(fieldNames)
+            self.dlg.cityComboBox.addItems(fieldNames)
             self.countFeatures()
         except AttributeError:
             pass
@@ -214,14 +210,8 @@ class Geocoder(object):
                 outlayer, fileName, "utf-8", outlayer.crs(), "ESRI Shapefile")
             outlayer = QgsVectorLayer(fileName, layerName, 'ogr')
 
+        self.dlg.progressBar.setValue(0)
         geocode = self.geocoder.geocode(outlayer)
-
-        if geocode:
-            QgsProject.instance().addMapLayer(outlayer)
-            self.iface.messageBar().pushMessage(
-                self.name,
-                self.tr(u'Geocoding successful'),
-                level=Qgis.Success)
 
 
     def countFeatures(self):
@@ -252,14 +242,12 @@ class Geocoder(object):
         if self.drawPoints():
             super(Geocoder, self).dlg.accept()
 
-    def addFieldsToLayer(self, layer):
-        layer.dataProvider().addAttributes([QgsField('ID', QVariant.Int)] + self.curLayer.dataProvider().fields().toList())
-        layer.updateFields()
 
     def _encode(self, val):
         if isinstance(val,(int, float)):
             val = str(val)
         return val if val else ''
+
 
     def _checkLayerGeometry(self, lyr):
         if isinstance(lyr, QgsRasterLayer):

@@ -51,4 +51,4 @@ class ErrorTableModel(QAbstractTableModel):
         self.endRemoveRows()
 
     def tr(self, message):
-        return QCoreApplication.translate('ErrorTable', message)
+        return QCoreApplication.translate(self.__class__.__name__, message)

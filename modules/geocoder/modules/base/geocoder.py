@@ -1,4 +1,4 @@
-from qgis.PyQt.QtCore import QObject
+from qgis.PyQt.QtCore import QObject, QCoreApplication
 from .errorTableModel import ErrorTableModel
 from collections import defaultdict
 
@@ -19,4 +19,14 @@ class GeocoderAbstract(QObject):
         pass
 
     def geocode(self, parent_layer):
-        return True
+        pass
+
+    def tr(self, message):
+        return QCoreApplication.translate(self.__class__.__name__, message)
+
+    def showMessage(self, message, level):
+        self.parent.iface.messageBar().pushMessage(
+            self.parent.name,
+            message,
+            level=level
+        )
