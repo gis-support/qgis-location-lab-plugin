@@ -94,13 +94,14 @@ class LocationLab(object):
             text=self.tr(u'Catchments'),
             callback=self.catchmentsModule.show)
         self.add_action(
-           ':/plugins/LocationLab/catchments/info.png',
-           text=self.tr(u'Info'),
-           callback=self.infoModule.show)
-        self.add_action(
             ':/plugins/LocationLab/geocoder/geocoder.png',
             text=self.tr(u'Geocoder'),
             callback=self.geocoderModule.show)
+        self.menu.addSeparator()
+        self.add_action(
+           ':/plugins/LocationLab/catchments/info.png',
+           text=self.tr(u'Info'),
+           callback=self.infoModule.show)
 
 
     def unload(self):
