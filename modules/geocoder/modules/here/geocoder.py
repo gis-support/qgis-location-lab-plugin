@@ -23,68 +23,47 @@ class GeocoderHERE(GeocoderAbstract):
         self.error_table_model = HEREErrorTableModel()
 
     def geocode(self, parent_layer):
-
-        def work(task):
-            erorrs = 0
-            invalid = 0
-            while True:
-                job_info = self.getJobInfo(self.request_id)
-                status = job_info['status']
-                progress = job_info['progress']
-                if status == 'completed':
-                    self.parent.dlg.progressBar.setValue(progress)
-                    #progress temporarly set once at the end not to cause QGIS crash
-                    errors = job_info['errors']
-                    invalid = job_info['invalid']
-                    break
-
-            self.error_table_model.insertRows([
-                {'errors': errors, 'invalid': invalid}
-            ])
-
-            result = self.getJobResult(self.request_id)
-            self.addFieldsToParentLayer(self.layer)
-            result_attributes = [row.split(self.SEPARATOR) for row in result.split('\n')]
-            for fid, attr in enumerate(self.parent.feature_attributes):
-                try:
-                    point = QgsPointXY(float(result_attributes[fid][4]), float(result_attributes[fid][3]))
-                except (ValueError, IndexError):
-                    #Failed to geocode
-                    continue
-                new_feature = QgsFeature()
-                new_feature.setGeometry(QgsGeometry.fromPointXY(point))
-                new_feature.setAttributes(attr + result_attributes[fid])
-                self.layer.dataProvider().addFeature(new_feature)
-            try:
-                self.parent.dlg.progressBar.setValue(len(self.parent.feature_attributes - invalid))
-            except:
-                pass
-
-        def handle_task_completed():
-            QgsProject.instance().addMapLayer(self.layer)
-            self.layer.updateExtents()
-            self.showMessage(self.tr('Geocoding successful'), Qgis.Success)
-
-        def handle_task_terminated():
-            self.showMessage(self.tr('Unknown error occured while fetching HERE API response.'), Qgis.Critical)
-
-        try:
-            self.showMessage(self.tr('HERE batch geocode request is being created, it may take a while to complete.'), Qgis.Info)
-        except:
-            pass
+        # self.showMessage(self.tr('HERE batch geocode request is being created, it may take a while to complete.'), Qgis.Info)
         response = self.createApiRequest()
-        self.request_id = response.get('id')
+        request_id = response.get('id')
         error = response.get('error')
         if error:
-            self.showMessage(self.tr('Error') + error, Qgis.Critical)
+            self.showMessage(self.tr('Error: ') + error, Qgis.Critical)
             return
-        self.layer = parent_layer
 
-        manager = QgsApplication.taskManager()
-        geocode_task = QgsTask.fromFunction('Location Lab', work)
-        geocode_task.taskCompleted.connect(handle_task_completed)
-        geocode_task.taskTerminated.connect(handle_task_terminated)
-        manager.addTask(geocode_task)
+        erorrs = 0
+        invalid = 0
+        while True:
+            job_info = self.getJobInfo(request_id)
+            status = job_info['status']
+            progress = job_info['progress']
+            if status == 'completed':
+                errors = job_info['errors']
+                invalid = job_info['invalid']
+                break
+
+        self.error_table_model.insertRows([
+            {'errors': errors, 'invalid': invalid}
+        ])
+
+        result = self.getJobResult(request_id)
+        self.addFieldsToParentLayer(parent_layer)
+        result_attributes = [row.split(self.SEPARATOR) for row in result.split('\n')]
+        for fid, attr in enumerate(self.parent.feature_attributes):
+            try:
+                point = QgsPointXY(float(result_attributes[fid][4]), float(result_attributes[fid][3]))
+            except (ValueError, IndexError):
+                #Failed to geocode
+                continue
+            new_feature = QgsFeature()
+            new_feature.setGeometry(QgsGeometry.fromPointXY(point))
+            new_feature.setAttributes(attr + result_attributes[fid])
+            parent_layer.dataProvider().addFeature(new_feature)
+            self.parent.dlg.progressBar.setValue(len(self.parent.feature_attributes) - invalid)
+
+        QgsProject.instance().addMapLayer(parent_layer)
+        parent_layer.updateExtents()
+        self.showMessage(self.tr('Geocoding successful'), Qgis.Success)
 
     def createApiRequest(self):
         request_url = self.API_URL+f'?&apiKey={self.api_key}&action=run&header=false&inDelim={self.SEPARATOR}&outDelim={self.SEPARATOR}&outCols=latitude,longitude,locationLabel&outputCombined=True&language=pl-PL'

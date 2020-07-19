@@ -316,24 +316,29 @@
 <context>
     <name>GeocoderHERE</name>
     <message>
-        <location filename="../modules/geocoder/modules/here/geocoder.py" line="67"/>
+        <location filename="../modules/geocoder/modules/here/geocoder.py" line="68"/>
         <source>Geocoding successful</source>
         <translation>Pomyślnie ukończono geokodowanie</translation>
     </message>
     <message>
         <location filename="../modules/geocoder/modules/here/geocoder.py" line="73"/>
         <source>HERE batch geocode request is being created, it may take a while to complete.</source>
-        <translation>Tworzone jest zapytanie do HERE API. Jego wykonanie może zająć trochę czasu.</translation>
+        <translation type="obsolete">Tworzone jest zapytanie do HERE API. Jego wykonanie może zająć trochę czasu.</translation>
     </message>
     <message>
         <location filename="../modules/geocoder/modules/here/geocoder.py" line="80"/>
         <source>Error</source>
-        <translation>Błąd</translation>
+        <translation type="obsolete">Błąd</translation>
     </message>
     <message>
         <location filename="../modules/geocoder/modules/here/geocoder.py" line="70"/>
         <source>Unknown error occured while fetching HERE API response.</source>
-        <translation>Podczas pobierania odpowiedzi z HERE API wystąpił błąd.</translation>
+        <translation type="obsolete">Podczas pobierania odpowiedzi z HERE API wystąpił błąd.</translation>
+    </message>
+    <message>
+        <location filename="../modules/geocoder/modules/here/geocoder.py" line="32"/>
+        <source>Error: </source>
+        <translation>Błąd: </translation>
     </message>
 </context>
 <context>
@@ -387,12 +392,12 @@
         <translation>Zasięgi</translation>
     </message>
     <message>
-        <location filename="../location_lab.py" line="96"/>
+        <location filename="../location_lab.py" line="101"/>
         <source>Info</source>
         <translation>Informacje</translation>
     </message>
     <message>
-        <location filename="../location_lab.py" line="100"/>
+        <location filename="../location_lab.py" line="96"/>
         <source>Geocoder</source>
         <translation>Geokoder</translation>
     </message>
