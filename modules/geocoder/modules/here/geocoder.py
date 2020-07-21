@@ -1,16 +1,16 @@
 from ..base.geocoder import GeocoderAbstract
 from .errorTableModel import HEREErrorTableModel
 
-from qgis.core import Qgis, QgsField, QgsPointXY, QgsFeature, QgsGeometry, QgsTask, QgsApplication, QgsProject
-from qgis.PyQt.QtCore import QVariant
+from qgis.core import Qgis, QgsField, QgsPointXY, QgsFeature, QgsGeometry, QgsApplication, QgsProject,\
+    QgsNetworkAccessManager
+from qgis.PyQt.QtCore import QVariant, QUrl, QEventLoop
+from qgis.PyQt.QtNetwork import QNetworkRequest
 from collections import defaultdict
 from io import BytesIO
 from zipfile import ZipFile
 import csv
 import json
 import xml.etree.cElementTree as et
-import urllib.request
-
 
 class GeocoderHERE(GeocoderAbstract):
     
@@ -23,7 +23,6 @@ class GeocoderHERE(GeocoderAbstract):
         self.error_table_model = HEREErrorTableModel()
 
     def geocode(self, parent_layer):
-        # self.showMessage(self.tr('HERE batch geocode request is being created, it may take a while to complete.'), Qgis.Info)
         response = self.createApiRequest()
         request_id = response.get('id')
         error = response.get('error')
@@ -31,12 +30,14 @@ class GeocoderHERE(GeocoderAbstract):
             self.showMessage(self.tr('Error: ') + error, Qgis.Critical)
             return
 
+        self.showMessage(self.tr('HERE batch geocode request is being created, it may take a while to complete.'), Qgis.Info)
         erorrs = 0
         invalid = 0
         while True:
             job_info = self.getJobInfo(request_id)
             status = job_info['status']
             progress = job_info['progress']
+            self.parent.dlg.progressBar.setValue(progress - invalid)
             if status == 'completed':
                 errors = job_info['errors']
                 invalid = job_info['invalid']
@@ -59,7 +60,6 @@ class GeocoderHERE(GeocoderAbstract):
             new_feature.setGeometry(QgsGeometry.fromPointXY(point))
             new_feature.setAttributes(attr + result_attributes[fid])
             parent_layer.dataProvider().addFeature(new_feature)
-            self.parent.dlg.progressBar.setValue(len(self.parent.feature_attributes) - invalid)
 
         QgsProject.instance().addMapLayer(parent_layer)
         parent_layer.updateExtents()
@@ -77,13 +77,13 @@ class GeocoderHERE(GeocoderAbstract):
                 row.append(str(self.geocode_parameters[key][i]))
             params_string += '|'.join(row) + '\n'
 
-        headers = {'Content-type': 'text/plain', 'Content-length': len(params_string)}
-        request = urllib.request.Request(request_url, params_string.encode(), headers=headers)
-        try:
-            response = urllib.request.urlopen(request)
-            return {'id': self._extractInfoFromXMLResponse(response, get_id=True)}
-        except urllib.error.HTTPError as error:
-            return {'error': error.msg}
+        response = self.request(request_url, params_string, 'post')
+        if 'error' in response:
+            response_data = json.loads(response)
+            error_msg = response_data['error_description']
+            return {'error': error_msg}
+        else:
+            return {'id': self.extractInfoFromXMLResponse(response, get_id=True)}
 
     def setParams(self, features):
         self.geocode_parameters = defaultdict(list)
@@ -97,8 +97,8 @@ class GeocoderHERE(GeocoderAbstract):
 
     def getJobInfo(self, request_id):
         request_url = self.API_URL+f'/{request_id}?action=status&apiKey={self.api_key}'
-        response = urllib.request.urlopen(request_url)
-        info = self._extractInfoFromXMLResponse(response)
+        response = self.request(request_url)
+        info = self.extractInfoFromXMLResponse(response)
         return {
             'status': info.find('Status').text,
             'progress': int(info.find('ProcessedCount').text),
@@ -108,13 +108,18 @@ class GeocoderHERE(GeocoderAbstract):
 
     def getJobResult(self, request_id):
         request_url = self.API_URL+f'/{request_id.strip()}/result?apiKey={self.api_key}'
+        response = self.request(request_url, decode=False)
         try:
-            response_bytes = BytesIO(urllib.request.urlopen(request_url).read())
-            zf = ZipFile(response_bytes)
-            geocode_data = zf.read(zf.namelist()[0]).decode('utf-8')
-            return geocode_data
-        except urllib.error.HTTPError as error:
-            return {'error': error.msg}
+            if 'error' in response.decode():
+                response_data = json.loads(response)
+                error_msg = response_data['error_description']
+                return {'error': error_msg}
+        except:
+            pass
+        response_bytes = BytesIO(response)
+        zf = ZipFile(response_bytes)
+        geocode_data = zf.read(zf.namelist()[0]).decode()
+        return geocode_data
 
     def addFieldsToParentLayer(self, layer):
         here_fields = [
@@ -128,8 +133,22 @@ class GeocoderHERE(GeocoderAbstract):
         layer.dataProvider().addAttributes(self.parent.curLayer.dataProvider().fields().toList() + here_fields)
         layer.updateFields()
 
-    def _extractInfoFromXMLResponse(self, resp, get_id=False):
-        tree = et.fromstring(resp.read().decode())
+    def request(self, url, data=None, method='get', decode=True):
+        request = QNetworkRequest(QUrl(url))
+        if method == 'get':
+            response = self.manager.get(request)
+        else:
+            request.setRawHeader(b'Content-Type', b'text/plain')
+            response = self.manager.post(request, data.encode())
+        loop = QEventLoop()
+        response.finished.connect(loop.quit)
+        loop.exec_()
+        response_data = response.readAll().data()
+        return response_data if not decode else response_data.decode()
+
+    @staticmethod
+    def extractInfoFromXMLResponse(resp, get_id=False):
+        tree = et.fromstring(resp)
         info = tree.find('Response')
         if not get_id:
             return info

@@ -1,4 +1,5 @@
 from qgis.PyQt.QtCore import QObject, QCoreApplication
+from qgis.core import QgsNetworkAccessManager
 from .errorTableModel import ErrorTableModel
 from collections import defaultdict
 
@@ -11,6 +12,7 @@ class GeocoderAbstract(QObject):
         self.parent = parent
         self.error_table_model = ErrorTableModel()
         self.geocode_parameters = defaultdict(list)
+        self.manager = QgsNetworkAccessManager.instance()
 
     def saveKey(self, api_key):
         self.api_key = api_key

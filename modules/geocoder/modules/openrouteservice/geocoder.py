@@ -1,10 +1,11 @@
 
 from ..base.geocoder import GeocoderAbstract
 
-from qgis.core import Qgis, QgsPointXY, QgsFeature, QgsGeometry, QgsField, QgsProject
-from qgis.PyQt.QtCore import QVariant
+from qgis.core import Qgis, QgsPointXY, QgsFeature, QgsGeometry, QgsField, QgsProject, QgsNetworkAccessManager
+from qgis.PyQt.QtCore import QVariant, QEventLoop, QUrl
+from qgis.PyQt.QtNetwork import QNetworkRequest
 import json
-import urllib
+import urllib.parse
 from collections import defaultdict
 
 class GeocoderORS(GeocoderAbstract):
@@ -26,14 +27,15 @@ class GeocoderORS(GeocoderAbstract):
             response = self.createApiRequest(request_data)
 
             error = response.get('error')
-            if error == 'Invalid API Key':
-                self.showMessage(error, Qgis.Critical)
-                return
-            elif error:
-                full_address = self.getFeatureFullAddress(fid)
-                self.error_table_model.insertRows([
-                    {'id': fid + 1, 'address': full_address, 'error': error}
-                ])
+            if error:
+                if 'unauthorized' in error:
+                    self.showMessage(error, Qgis.Critical)
+                    return
+                else:
+                    full_address = self.getFeatureFullAddress(fid)
+                    self.error_table_model.insertRows([
+                        {'id': fid + 1, 'address': full_address, 'error': error}
+                    ])
             else:
                 all_features = response.get('features')
                 if all_features:
@@ -61,15 +63,11 @@ class GeocoderORS(GeocoderAbstract):
         QgsProject.instance().addMapLayer(parent_layer)
 
     def createApiRequest(self, parameters):
-        try:
-            request = urllib.request.urlopen(self._buildRequestUrl(parameters))
-            response = json.loads(request.read().decode())
-            return response
-        except urllib.error.HTTPError as error:
-            if error.code == 403:
-                return {'error': self.tr('Invalid API Key')}
-            else:
-                return {'error': error.msg}
+        response = json.loads(self.request(self._buildRequestUrl(parameters)))
+        if 'error' in response:
+            error_msg = response['error']
+            return {'error': error_msg}
+        return response
 
     def setParams(self, features):
         self.geocode_parameters = defaultdict(list)
@@ -93,8 +91,8 @@ class GeocoderORS(GeocoderAbstract):
 
     def getFeatureFullAddress(self, fid):
         try:
-            address = self.geocode_parameters['address'][id]
-            return ', '.join([self.geocode_parameters['locality'][id], address])
+            address = self.geocode_parameters['address'][fid]
+            return ', '.join([self.geocode_parameters['locality'][fid], address])
         except IndexError:
             return ''
 
@@ -112,6 +110,14 @@ class GeocoderORS(GeocoderAbstract):
         ]
         layer.dataProvider().addAttributes(fields + self.parent.curLayer.dataProvider().fields().toList())
         layer.updateFields()
+
+    def request(self, url):
+        request = QNetworkRequest(QUrl(url))
+        response = self.manager.get(request)
+        loop = QEventLoop()
+        response.finished.connect(loop.quit)
+        loop.exec_()
+        return response.readAll().data().decode()
 
     def _buildRequestUrl(self, request_params):
         return self.API_URL + '?api_key=' + str(self.api_key)\

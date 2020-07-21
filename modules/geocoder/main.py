@@ -154,9 +154,6 @@ class Geocoder(object):
                     pass
                 self.curLayer = layer
                 self.curLayer.layerModified.connect(self.countFeatures)
-                self.curLayer.featureAdded.connect(self.countFeatures)
-                self.curLayer.featureDeleted.connect(self.countFeatures)
-                self.curLayer.geometryChanged.connect(self.countFeatures)
                 break
         try:
             fieldNames = [field.name() for field in self.curLayer.dataProvider().fields()]
@@ -216,9 +213,9 @@ class Geocoder(object):
 
     def countFeatures(self):
         self.dlg.progressBar.setValue(0)
+        self.featureCounter = 0
         try:
             if not self.dlg.sObjCheckBox.isChecked():
-                self.featureCounter = 0
                 if self.layers:
                     for feature in self.curLayer.getFeatures():
                         self.featureCounter += 1

@@ -316,14 +316,14 @@
 <context>
     <name>GeocoderHERE</name>
     <message>
-        <location filename="../modules/geocoder/modules/here/geocoder.py" line="68"/>
+        <location filename="../modules/geocoder/modules/here/geocoder.py" line="67"/>
         <source>Geocoding successful</source>
         <translation>Pomyślnie ukończono geokodowanie</translation>
     </message>
     <message>
-        <location filename="../modules/geocoder/modules/here/geocoder.py" line="73"/>
+        <location filename="../modules/geocoder/modules/here/geocoder.py" line="34"/>
         <source>HERE batch geocode request is being created, it may take a while to complete.</source>
-        <translation type="obsolete">Tworzone jest zapytanie do HERE API. Jego wykonanie może zająć trochę czasu.</translation>
+        <translation>Tworzone jest zapytanie do HERE API. Jego wykonanie może zająć trochę czasu.</translation>
     </message>
     <message>
         <location filename="../modules/geocoder/modules/here/geocoder.py" line="80"/>
@@ -336,7 +336,7 @@
         <translation type="obsolete">Podczas pobierania odpowiedzi z HERE API wystąpił błąd.</translation>
     </message>
     <message>
-        <location filename="../modules/geocoder/modules/here/geocoder.py" line="32"/>
+        <location filename="../modules/geocoder/modules/here/geocoder.py" line="31"/>
         <source>Error: </source>
         <translation>Błąd: </translation>
     </message>
@@ -344,14 +344,19 @@
 <context>
     <name>GeocoderORS</name>
     <message>
-        <location filename="../modules/geocoder/modules/openrouteservice/geocoder.py" line="59"/>
+        <location filename="../modules/geocoder/modules/openrouteservice/geocoder.py" line="61"/>
         <source>Geocoding succesful</source>
         <translation>Pomyslnie ukończono geokodowanie</translation>
     </message>
     <message>
         <location filename="../modules/geocoder/modules/openrouteservice/geocoder.py" line="69"/>
         <source>Invalid API Key</source>
-        <translation>Niepoprawny klucz API</translation>
+        <translation type="obsolete">Niepoprawny klucz API</translation>
+    </message>
+    <message>
+        <location filename="../modules/geocoder/modules/openrouteservice/geocoder.py" line="31"/>
+        <source>Daily request limit reached or invalid API key provided.</source>
+        <translation>Przekroczono dzienny limit zapytań lub podano niepoprawny klucz API.</translation>
     </message>
 </context>
 <context>
