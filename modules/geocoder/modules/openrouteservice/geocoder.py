@@ -27,17 +27,20 @@ class GeocoderORS(GeocoderAbstract):
             response = self.createApiRequest(request_data)
 
             error = response.get('error')
+            full_address = self.getFeatureFullAddress(fid)
+            all_features = response.get('features')
+
             if error:
                 if 'unauthorized' in error:
                     self.showMessage(error, Qgis.Critical)
                     return
-                else:
-                    full_address = self.getFeatureFullAddress(fid)
-                    self.error_table_model.insertRows([
-                        {'id': fid + 1, 'address': full_address, 'error': error}
-                    ])
+            elif error or not all_features:
+                if not error:
+                    error = 'Failed to geocode'
+                self.error_table_model.insertRows([
+                    {'id': fid + 1, 'address': full_address, 'error': error}
+                ])
             else:
-                all_features = response.get('features')
                 if all_features:
                     attrs_to_get = [
                         'continent', 'country',

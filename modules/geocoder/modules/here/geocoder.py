@@ -37,10 +37,10 @@ class GeocoderHERE(GeocoderAbstract):
             job_info = self.getJobInfo(request_id)
             status = job_info['status']
             progress = job_info['progress']
-            self.parent.dlg.progressBar.setValue(progress - invalid)
+            errors = job_info['errors']
+            invalid = job_info['invalid']
+            self.parent.dlg.progressBar.setValue(progress - (invalid + errors))
             if status == 'completed':
-                errors = job_info['errors']
-                invalid = job_info['invalid']
                 break
 
         self.error_table_model.insertRows([
