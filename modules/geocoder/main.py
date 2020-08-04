@@ -154,6 +154,7 @@ class Geocoder(object):
                     pass
                 self.curLayer = layer
                 self.curLayer.layerModified.connect(self.countFeatures)
+                self.curLayer.updatedFields.connect(self.updateFieldNames)
                 break
         try:
             fieldNames = [field.name() for field in self.curLayer.dataProvider().fields()]

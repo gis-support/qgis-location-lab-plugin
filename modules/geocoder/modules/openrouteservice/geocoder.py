@@ -44,8 +44,7 @@ class GeocoderORS(GeocoderAbstract):
                 if all_features:
                     attrs_to_get = [
                         'continent', 'country',
-                        'region', 'county',
-                        'confidence', 'match_type',
+                        'region', 'confidence', 'match_type',
                         'layer', 'accuracy'
                     ]
                     feature = max(all_features, key=lambda item: item['properties']['confidence'])
@@ -105,7 +104,6 @@ class GeocoderORS(GeocoderAbstract):
             QgsField('Continent', QVariant.String),
             QgsField('Country', QVariant.String),
             QgsField('Region', QVariant.String),
-            QgsField('County', QVariant.String),
             QgsField('Confidence', QVariant.Int),
             QgsField('Match type', QVariant.String),
             QgsField('Layer', QVariant.String),
