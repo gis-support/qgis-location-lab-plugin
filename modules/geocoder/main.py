@@ -122,21 +122,24 @@ class Geocoder(object):
 
 
     def beforeRemove(self, layers):
-        if self.curLayer is None:
+        if not hasattr(self, 'curLayer'):
             return
-        for layer in layers:
-            if self.curLayer.name() in layer:
-                self.dlg.label_counter.setText('0')
-                self.dlg.progressBar.setFormat(self.tr('no addresses provided'))
-                try:
-                    self.curLayer.layerModified.disconnect()
-                    self.curLayer.featureAdded.disconnect()
-                    self.curLayer.featureDeleted.disconnect()
-                    self.curLayer.geometryChanged.disconnect()
-                except:
-                    pass
-                self.curLayer = None
-                break
+        else:
+            if self.curLayer is None:
+                return
+            for layer in layers:
+                if self.curLayer.name() in layer:
+                    self.dlg.label_counter.setText('0')
+                    self.dlg.progressBar.setFormat(self.tr('no addresses provided'))
+                    try:
+                        self.curLayer.layerModified.disconnect()
+                        self.curLayer.featureAdded.disconnect()
+                        self.curLayer.featureDeleted.disconnect()
+                        self.curLayer.geometryChanged.disconnect()
+                    except:
+                        pass
+                    self.curLayer = None
+                    break
 
 
     def updateFieldNames(self):

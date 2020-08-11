@@ -35,6 +35,7 @@ import locale
 import urllib.request, urllib.parse, urllib.error
 import json
 import requests
+from .api_limits import RateLimitDecorator, RateLimitException, sleep_and_retry
 
 locale.setlocale(locale.LC_ALL, '')
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
@@ -145,6 +146,7 @@ class Catchments(QDockWidget, FORM_CLASS):
         return points
 
     def requestApi(self, points):
+
         polygons = []
         not_found = 0
         if self.providersComboBox.currentText() == 'HERE':
@@ -212,10 +214,7 @@ class Catchments(QDockWidget, FORM_CLASS):
             range_type     string      time/distance
             profile        string      driving-car/driving-hgv/foot-walking (query parameter)
             """
-            source = self.providersComboBox.currentText()
-            url = 'https://api.openrouteservice.org/v2/isochrones'
 
-            mode = self.OPENROUTE_PARAMS[self.modesComboBox.currentText()]
             location_coords = [[p[0], p[1]] for p in points]
             data = {
                 'locations': location_coords,
@@ -226,25 +225,8 @@ class Catchments(QDockWidget, FORM_CLASS):
             }
             if self.pointsRouteStartCheckBox.isChecked():
                 data['location_type'] = 'destination'
-            r = requests.post(
-                f'{url}/{mode}',
-                json=data,
-                headers={'Authorization': self.keyLineEdit.text().strip()}
-            )
-            if r.status_code == 403:
-                polygons = r.json()['error']
-            elif r.status_code == 200:
-                data.update({
-                    'source': source,
-                    'url': url
-                })
-                features = r.json()['features']
-                for index, feature in enumerate(features):
-                    feature_coords = feature['geometry']['coordinates'][0]
-                    feature_data = dict(data)
-                    feature_data.update({'coords': f'{location_coords[index][0]}, {location_coords[index][1]}'})
-                    feature_data['coordinates'] = [str(c[1])+ ',' + str(c[0]) for c in feature_coords]
-                    polygons.append(feature_data)
+
+            self._requestORS(data, location_coords, polygons)
 
         if polygons and not_found:
             self.iface.messageBar().pushMessage(
@@ -385,3 +367,30 @@ class Catchments(QDockWidget, FORM_CLASS):
                 level=Qgis.Warning)
             return
         self.addPolygonsToMap(polygons)
+
+    @sleep_and_retry
+    @RateLimitDecorator(calls=20, period=60)
+    def _requestORS(self, data, locations, output):
+        url = 'https://api.openrouteservice.org/v2/isochrones'
+        r = requests.post(
+            '{}/{}'.format(
+                url,
+                self.OPENROUTE_PARAMS[self.modesComboBox.currentText()]
+            ),
+            json=data,
+            headers={'Authorization': self.keyLineEdit.text().strip()}
+        )
+        if r.status_code == 403:
+            output = r.json()['error']
+        elif r.status_code == 200:
+            data.update({
+                'source': self.providersComboBox.currentText(),
+                'url': url
+            })
+            features = r.json()['features']
+            for index, feature in enumerate(features):
+                feature_coords = feature['geometry']['coordinates'][0]
+                feature_data = dict(data)
+                feature_data.update({'coords': f'{locations[index][0]}, {locations[index][1]}'})
+                feature_data['coordinates'] = [str(c[1])+ ',' + str(c[0]) for c in feature_coords]
+                output.append(feature_data)
