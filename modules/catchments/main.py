@@ -217,7 +217,6 @@ class Catchments(QDockWidget, FORM_CLASS):
 
             location_coords = [[p[0], p[1]] for p in points]
             data = {
-                'locations': location_coords,
                 'range': [self.valueSpinBox.value()] if self.unitsComboBox.currentText() == self.tr('Meters')\
                     else [self.valueSpinBox.value() * 60],
                 'range_type': 'distance' if self.unitsComboBox.currentText() == self.tr('Meters') else 'time',
@@ -226,7 +225,9 @@ class Catchments(QDockWidget, FORM_CLASS):
             if self.pointsRouteStartCheckBox.isChecked():
                 data['location_type'] = 'destination'
 
-            self._requestORS(data, location_coords, polygons)
+            locations_div = [location_coords[i:i + 5] for i in range(0, len(location_coords), 5)]
+            for chunk in locations_div:
+                self._requestORS(data, chunk, polygons)
 
         if polygons and not_found:
             self.iface.messageBar().pushMessage(
@@ -305,6 +306,7 @@ class Catchments(QDockWidget, FORM_CLASS):
             return
         self.updateFeaturesQuantity()
         vl.selectionChanged.connect(self.updateFeaturesQuantity)
+        vl.layerModified.connect(self.updateFeaturesQuantity)
 
     def updateFeaturesQuantity(self):
         vl = self.layerComboBox.currentLayer()
@@ -315,10 +317,7 @@ class Catchments(QDockWidget, FORM_CLASS):
         else:
             features = [f for f in vl.getFeatures()]
         self.pointsLabel.setText('{} {}'.format(self.tr('Number of points:'), len(features)))
-        if len(features) > 5 and self.providersComboBox.currentText() == 'OpenRouteService':
-            self.getCatchments.setEnabled(False)
-            self.pointsLabel.setText('{} {} {}'.format(self.tr('Number of points:'), len(features), self.tr('(limit is 5)')))
-        elif len(features) == 0:
+        if len(features) == 0:
             self.getCatchments.setEnabled(False)
         else:
             self.getCatchments.setEnabled(True)
@@ -372,6 +371,7 @@ class Catchments(QDockWidget, FORM_CLASS):
     @RateLimitDecorator(calls=20, period=60)
     def _requestORS(self, data, locations, output):
         url = 'https://api.openrouteservice.org/v2/isochrones'
+        data['locations'] = locations
         r = requests.post(
             '{}/{}'.format(
                 url,
@@ -380,6 +380,7 @@ class Catchments(QDockWidget, FORM_CLASS):
             json=data,
             headers={'Authorization': self.keyLineEdit.text().strip()}
         )
+        data.pop('locations')
         if r.status_code == 403:
             output = r.json()['error']
         elif r.status_code == 200:
