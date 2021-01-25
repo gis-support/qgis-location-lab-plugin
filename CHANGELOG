@@ -1,3 +1,11 @@
+2.2
+- [Catchments] Output layer IDs can be copied from input layers user selected field
+- [Catchments] Added new parameter - „points as route start”
+- [Catchments] Removed catchments limited points quantity
+- [Catchments] Fixed point counter
+- [Catchments] Updated EN translation
+- [Geocoder] Added new module fo geocoding. Supported APIs: HERE, OpenRouteService
+
 2.1
 - change plugin name to Location Lab
 

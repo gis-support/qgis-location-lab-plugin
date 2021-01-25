@@ -187,54 +187,55 @@
     </message>
 </context>
 <context>
+    <name>ErrorTable</name>
+    <message>
+        <location filename="../modules/geocoder/modules/base/errorTableModel.py" line="30"/>
+        <source>Address</source>
+        <translation type="obsolete">Adres</translation>
+    </message>
+    <message>
+        <location filename="../modules/geocoder/modules/base/errorTableModel.py" line="32"/>
+        <source>Error message</source>
+        <translation type="obsolete">Treść błędu</translation>
+    </message>
+</context>
+<context>
+    <name>ErrorTableModel</name>
+    <message>
+        <location filename="../modules/geocoder/modules/base/errorTableModel.py" line="29"/>
+        <source>Address</source>
+        <translation>Adres</translation>
+    </message>
+    <message>
+        <location filename="../modules/geocoder/modules/base/errorTableModel.py" line="31"/>
+        <source>Error message</source>
+        <translation>Treść błędu</translation>
+    </message>
+</context>
+<context>
     <name>Geocoder</name>
     <message>
-        <location filename="../modules/geocoder/main.py" line="336"/>
+        <location filename="../modules/geocoder/main.py" line="235"/>
         <source>no addresses provided</source>
         <translation>nie podano żadnych adresów</translation>
     </message>
     <message>
-        <location filename="../modules/geocoder/main.py" line="234"/>
+        <location filename="../modules/geocoder/main.py" line="201"/>
         <source>Unknown error occurred</source>
         <translation>Wystąpił nieznany błąd</translation>
     </message>
     <message>
-        <location filename="../modules/geocoder/main.py" line="241"/>
+        <location filename="../modules/geocoder/main.py" line="207"/>
         <source>Save to...</source>
         <translation>Zapisz do...</translation>
     </message>
     <message>
         <location filename="../modules/geocoder/main.py" line="275"/>
         <source>Invalid API key. Provide a correct one and try again.</source>
-        <translation>Nieprawidłowy klucz API. Wprowadź poprawny klucz i spróbuj ponownie.</translation>
+        <translation type="obsolete">Nieprawidłowy klucz API. Wprowadź poprawny klucz i spróbuj ponownie.</translation>
     </message>
     <message>
-        <location filename="../modules/geocoder/main.py" line="281"/>
-        <source>An API request error occurred. Error message:</source>
-        <translation>Wystąpił błąd w zapytaniu do API. Treść błędu:</translation>
-    </message>
-    <message>
-        <location filename="../modules/geocoder/main.py" line="305"/>
-        <source>Geocoding successful</source>
-        <translation>Pomyślnie ukończono geokodowanie</translation>
-    </message>
-    <message>
-        <location filename="../modules/geocoder/main.py" line="310"/>
-        <source>Failed to geocode</source>
-        <translation>Nie udało się zageokodować</translation>
-    </message>
-    <message>
-        <location filename="../modules/geocoder/main.py" line="310"/>
-        <source>addresses</source>
-        <translation>adresów</translation>
-    </message>
-    <message>
-        <location filename="../modules/geocoder/main.py" line="314"/>
-        <source>Geocoding done</source>
-        <translation>Geokodowanie zakończone</translation>
-    </message>
-    <message>
-        <location filename="../modules/geocoder/main.py" line="333"/>
+        <location filename="../modules/geocoder/main.py" line="232"/>
         <source>addresses computed</source>
         <translation>zageokodowanych adresów</translation>
     </message>
@@ -242,89 +243,133 @@
 <context>
     <name>GeocoderDialog</name>
     <message>
-        <location filename="../modules/geocoder/geocoder_dialog.ui" line="29"/>
+        <location filename="../modules/geocoder/geocoder_dialog.ui" line="41"/>
         <source>Location Lab: Geocoder</source>
         <translation>Geokoder</translation>
     </message>
     <message>
-        <location filename="../modules/geocoder/geocoder_dialog.ui" line="48"/>
+        <location filename="../modules/geocoder/geocoder_dialog.ui" line="60"/>
         <source>Select text layer:</source>
         <translation>Wybierz warstwę tekstową:</translation>
     </message>
     <message>
-        <location filename="../modules/geocoder/geocoder_dialog.ui" line="88"/>
-        <source>Number of objects:</source>
-        <translation>Liczba obiektów:</translation>
-    </message>
-    <message>
-        <location filename="../modules/geocoder/geocoder_dialog.ui" line="95"/>
-        <source>0</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../modules/geocoder/geocoder_dialog.ui" line="79"/>
+        <location filename="../modules/geocoder/geocoder_dialog.ui" line="91"/>
         <source>only selected</source>
         <translation>tylko zaznaczone</translation>
     </message>
     <message>
-        <location filename="../modules/geocoder/geocoder_dialog.ui" line="143"/>
-        <source>API provider:</source>
-        <translation type="obsolete">Wybierz API:</translation>
+        <location filename="../modules/geocoder/geocoder_dialog.ui" line="100"/>
+        <source>Number of objects:</source>
+        <translation>Liczba obiektów:</translation>
     </message>
     <message>
-        <location filename="../modules/geocoder/geocoder_dialog.ui" line="203"/>
-        <source>Select all fields containing address data:</source>
-        <translation type="obsolete">Wybierz pola zawierające dane adresowe:</translation>
+        <location filename="../modules/geocoder/geocoder_dialog.ui" line="107"/>
+        <source>0</source>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../modules/geocoder/geocoder_dialog.ui" line="181"/>
-        <source>Select respective columns:</source>
-        <translation>Wybierz odpowiednie kolumny:</translation>
-    </message>
-    <message>
-        <location filename="../modules/geocoder/geocoder_dialog.ui" line="208"/>
-        <source>Street:</source>
-        <translation>Ulica:</translation>
-    </message>
-    <message>
-        <location filename="../modules/geocoder/geocoder_dialog.ui" line="250"/>
-        <source>House no.:</source>
-        <translation>Nr domu:</translation>
-    </message>
-    <message>
-        <location filename="../modules/geocoder/geocoder_dialog.ui" line="286"/>
-        <source>Zip code:</source>
-        <translation>Kod pocztowy:</translation>
-    </message>
-    <message>
-        <location filename="../modules/geocoder/geocoder_dialog.ui" line="322"/>
-        <source>City:</source>
-        <translation>Miasto:</translation>
-    </message>
-    <message>
-        <location filename="../modules/geocoder/geocoder_dialog.ui" line="356"/>
-        <source>Start geocoding</source>
-        <translation>Rozpocznij geokodowanie</translation>
-    </message>
-    <message>
-        <location filename="../modules/geocoder/geocoder_dialog.ui" line="409"/>
-        <source>%v/%m addresses computed</source>
-        <translation type="obsolete">%v/%m zgeokodowanych adresów</translation>
-    </message>
-    <message>
-        <location filename="../modules/geocoder/geocoder_dialog.ui" line="125"/>
+        <location filename="../modules/geocoder/geocoder_dialog.ui" line="137"/>
         <source>Choose API:</source>
         <translation>Wybierz API:</translation>
     </message>
     <message>
-        <location filename="../modules/geocoder/geocoder_dialog.ui" line="135"/>
+        <location filename="../modules/geocoder/geocoder_dialog.ui" line="147"/>
         <source>Key:</source>
         <translation>Klucz:</translation>
     </message>
     <message>
-        <location filename="../modules/geocoder/geocoder_dialog.ui" line="346"/>
+        <location filename="../modules/geocoder/geocoder_dialog.ui" line="193"/>
+        <source>Select respective columns:</source>
+        <translation>Wybierz odpowiednie kolumny:</translation>
+    </message>
+    <message>
+        <location filename="../modules/geocoder/geocoder_dialog.ui" line="220"/>
+        <source>Street:</source>
+        <translation>Ulica:</translation>
+    </message>
+    <message>
+        <location filename="../modules/geocoder/geocoder_dialog.ui" line="262"/>
+        <source>House no.:</source>
+        <translation>Nr domu:</translation>
+    </message>
+    <message>
+        <location filename="../modules/geocoder/geocoder_dialog.ui" line="298"/>
+        <source>Zip code:</source>
+        <translation>Kod pocztowy:</translation>
+    </message>
+    <message>
+        <location filename="../modules/geocoder/geocoder_dialog.ui" line="334"/>
+        <source>City:</source>
+        <translation>Miasto:</translation>
+    </message>
+    <message>
+        <location filename="../modules/geocoder/geocoder_dialog.ui" line="360"/>
         <source>save to file</source>
         <translation>zapisz do pliku</translation>
+    </message>
+    <message>
+        <location filename="../modules/geocoder/geocoder_dialog.ui" line="370"/>
+        <source>Start geocoding</source>
+        <translation>Rozpocznij geokodowanie</translation>
+    </message>
+</context>
+<context>
+    <name>GeocoderHERE</name>
+    <message>
+        <location filename="../modules/geocoder/modules/here/geocoder.py" line="67"/>
+        <source>Geocoding successful</source>
+        <translation>Pomyślnie ukończono geokodowanie</translation>
+    </message>
+    <message>
+        <location filename="../modules/geocoder/modules/here/geocoder.py" line="34"/>
+        <source>HERE batch geocode request is being created, it may take a while to complete.</source>
+        <translation>Tworzone jest zapytanie do HERE API. Jego wykonanie może zająć trochę czasu.</translation>
+    </message>
+    <message>
+        <location filename="../modules/geocoder/modules/here/geocoder.py" line="80"/>
+        <source>Error</source>
+        <translation type="obsolete">Błąd</translation>
+    </message>
+    <message>
+        <location filename="../modules/geocoder/modules/here/geocoder.py" line="70"/>
+        <source>Unknown error occured while fetching HERE API response.</source>
+        <translation type="obsolete">Podczas pobierania odpowiedzi z HERE API wystąpił błąd.</translation>
+    </message>
+    <message>
+        <location filename="../modules/geocoder/modules/here/geocoder.py" line="31"/>
+        <source>Error: </source>
+        <translation>Błąd: </translation>
+    </message>
+</context>
+<context>
+    <name>GeocoderORS</name>
+    <message>
+        <location filename="../modules/geocoder/modules/openrouteservice/geocoder.py" line="61"/>
+        <source>Geocoding succesful</source>
+        <translation>Pomyslnie ukończono geokodowanie</translation>
+    </message>
+    <message>
+        <location filename="../modules/geocoder/modules/openrouteservice/geocoder.py" line="69"/>
+        <source>Invalid API Key</source>
+        <translation type="obsolete">Niepoprawny klucz API</translation>
+    </message>
+    <message>
+        <location filename="../modules/geocoder/modules/openrouteservice/geocoder.py" line="31"/>
+        <source>Daily request limit reached or invalid API key provided.</source>
+        <translation>Przekroczono dzienny limit zapytań lub podano niepoprawny klucz API.</translation>
+    </message>
+</context>
+<context>
+    <name>HEREErrorTableModel</name>
+    <message>
+        <location filename="../modules/geocoder/modules/here/errorTableModel.py" line="12"/>
+        <source>Errors</source>
+        <translation>Błędy</translation>
+    </message>
+    <message>
+        <location filename="../modules/geocoder/modules/here/errorTableModel.py" line="14"/>
+        <source>Invalid objects</source>
+        <translation>Niepoprawne obiekty</translation>
     </message>
 </context>
 <context>
@@ -332,7 +377,7 @@
     <message>
         <location filename="../modules/catchments/info.ui" line="17"/>
         <source>Info</source>
-        <translation>Info</translation>
+        <translation>Informacje</translation>
     </message>
     <message>
         <location filename="../modules/catchments/info.ui" line="23"/>
@@ -352,12 +397,12 @@
         <translation>Zasięgi</translation>
     </message>
     <message>
-        <location filename="../location_lab.py" line="96"/>
+        <location filename="../location_lab.py" line="101"/>
         <source>Info</source>
         <translation>Informacje</translation>
     </message>
     <message>
-        <location filename="../location_lab.py" line="100"/>
+        <location filename="../location_lab.py" line="96"/>
         <source>Geocoder</source>
         <translation>Geokoder</translation>
     </message>
