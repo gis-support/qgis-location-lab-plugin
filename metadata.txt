@@ -2,7 +2,7 @@
 name=Location Lab
 qgisMinimumVersion=3.0
 description=Perform Location Intelligence analysis (catchments generation) in a QGIS environment
-version=2.1.6
+version=2.2.1
 author=Sebastian Schulz, GIS Support sp. z o. o.
 email=sebastian.schulz@gis-support.pl
 about=Location Lab is a toolset that allows you to perform location intelligence/geomarketing analysis in a QGIS environment. This plugin consists of one tool: Catchments. It allows you to generate catchment areas using third-party APIs (HERE and Skobbler for now). For example, you can easily designate a catchment area of 30-minute drive time or 5-minute walk from a certain point without having any transportation data. As a result of the analysis you will get a new polygon layer. All calculations are performed on external servers. For full use of the plugin you will have to generate an API Key on API providers' websites. All API services provide free plans with limited usage quota.
