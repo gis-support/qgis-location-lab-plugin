@@ -204,6 +204,8 @@ class Catchments(QDockWidget, FORM_CLASS):
                         return 'forbidden'
                     else:
                         continue
+                except urllib.error.URLError as e:
+                    return f'URLError: {str(e)}'
                 params['coordinates'] = json.loads(r.read().decode())['response']['isoline'][0]['component'][0]['shape']
                 polygons.append(params)
         elif self.providersComboBox.currentText() == 'OpenRouteService':
@@ -352,18 +354,27 @@ class Catchments(QDockWidget, FORM_CLASS):
                 u'Catchments',
                 self.tr(u'Invalid API key'),
                 level=Qgis.Warning)
-            return 
+            return
         elif polygons == 'forbidden':
             self.iface.messageBar().pushMessage(
                 u'Catchments',
                 self.tr(u'These credentials do not authorize access'),
                 level=Qgis.Warning)
-            return 
+            return
         elif polygons == 'Daily quota reached or API key unauthorized':
             self.iface.messageBar().pushMessage(
                 u'Catchments',
                 self.tr(u'Openservice API daily quota reached or API key unauthorized'),
                 level=Qgis.Warning)
+            return
+        elif "URLError" in polygons:
+            error_message = polygons.split("URLError: ")[1].replace(">", "").replace("<", "")
+            error_info = self.tr(f'An error occured while executing HERE API request. Error Message: ')
+            self.iface.messageBar().pushMessage(
+                u'Catchments',
+                error_info + error_message,
+                level=Qgis.Warning
+            )
             return
         self.addPolygonsToMap(polygons)
 

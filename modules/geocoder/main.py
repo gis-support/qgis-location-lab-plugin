@@ -204,8 +204,9 @@ class Geocoder(object):
                 level=Qgis.Critical)
         outlayer = QgsVectorLayer('Point?crs=EPSG:4326', 'tempGeocoderLayer', 'memory')
         if self.dlg.saveChkb.isChecked():
-            saveFile = QFileDialog.getSaveFileName(None, self.tr('Save to...'), filter='*.shp') #returns tuple (path, extension)
-            fileName = '{}{}'.format(saveFile[0], saveFile[1][-4:])
+            dialog = QFileDialog()
+            saveFile = dialog.getSaveFileName(None, self.tr('Save to...')) #returns tuple (path, extension)
+            fileName = '{}{}'.format(saveFile[0].split('.')[0], '.shp')
             layerName = os.path.basename(fileName)[:-4]
             QgsVectorFileWriter.writeAsVectorFormat(
                 outlayer, fileName, "utf-8", outlayer.crs(), "ESRI Shapefile")
