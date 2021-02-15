@@ -1,3 +1,8 @@
+2.2.2
+- Updated translations
+- Fixed QFileDialog extension filter
+- [Catchments] Handled HERE API url error
+
 2.2
 - [Catchments] Output layer IDs can be copied from input layers user selected field
 - [Catchments] Added new parameter - „points as route start”
